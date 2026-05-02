@@ -1,13 +1,38 @@
+import 'package:babyshopapp/Screens/home/profile.dart';
 import 'package:flutter/material.dart';
 
-class Home extends StatelessWidget {
-  Home({super.key});
+class Home extends StatefulWidget {
+  const Home({super.key});
 
+  @override
+  State<Home> createState() => _HomeState();
+}
+
+class _HomeState extends State<Home> {
   final Color BabyBackgroundColor = Color(0xFFeef9fa);
   final Color BabyTeal = Color(0xFF6ecdd4);
   final Color BabyRose = Color(0xFFf79c81);
   final Color BabyDarkGrey = Color(0xFF575757);
   final Color BabyTorquoise = Color(0xFF2e9fb4);
+
+  List<Map<String, String>> premiumProducts = [];
+  List<Map<String, String>> allProducts = [];
+
+  @override
+  void initState() {
+    super.initState();
+    premiumProducts = [
+      {
+        'title': 'Costway Foldable Baby\nStroller 2 in 1',
+        'price': 'KES 23909',
+        'description': 'Great quality',
+      },
+    ];
+
+    allProducts = [
+      {'title': 'Costway Foldable Baby\nStroller 2 in 1', 'price': 'KES 23909'},
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,15 +42,11 @@ class Home extends StatelessWidget {
         children: [
           // Header with logo
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20),
-            child: Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: BabyTeal,
-                borderRadius: BorderRadius.circular(40),
-              ),
-              child: Icon(Icons.shopping_bag, color: Colors.white, size: 40),
+            padding: const EdgeInsets.fromLTRB(0, 30, 0, 0),
+            child: Image.asset(
+              'assets/png/Logo03.png',
+              width: 100,
+              height: 100,
             ),
           ),
 
@@ -33,13 +54,13 @@ class Home extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: TextField(
-              enabled: false,
+              enabled: true,
               decoration: InputDecoration(
                 hintText: 'Search your product...',
-                hintStyle: TextStyle(color: BabyDarkGrey.withOpacity(0.5)),
+                hintStyle: TextStyle(color: BabyDarkGrey),
                 prefixIcon: Icon(Icons.search, color: BabyTeal),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: BabyBackgroundColor,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30),
                   borderSide: BorderSide(color: BabyTeal, width: 1),
@@ -49,6 +70,10 @@ class Home extends StatelessWidget {
                   borderSide: BorderSide(color: BabyTeal, width: 1),
                 ),
                 disabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: BorderSide(color: BabyTeal, width: 1),
+                ),
+                focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30),
                   borderSide: BorderSide(color: BabyTeal, width: 1),
                 ),
@@ -105,23 +130,15 @@ class Home extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 16),
                     child: Row(
                       children: [
-                        _buildProductCard(
-                          'Costway Foldable Baby\nStroller 2 in 1',
-                          'KES 23909',
-                          'Great quality',
-                        ),
-                        SizedBox(width: 15),
-                        _buildProductCard(
-                          'Costway Foldable Baby\nStroller 2 in 1',
-                          'KES 23909',
-                          'Great quality',
-                        ),
-                        SizedBox(width: 15),
-                        _buildProductCard(
-                          'Costway Foldable Baby\nStroller 2 in 1',
-                          'KES 23909',
-                          'Great quality',
-                        ),
+                        for (int i = 0; i < premiumProducts.length; i++) ...[
+                          _buildProductCard(
+                            premiumProducts[i]['title']!,
+                            premiumProducts[i]['price']!,
+                            premiumProducts[i]['description']!,
+                          ),
+                          if (i < premiumProducts.length - 1)
+                            SizedBox(width: 15),
+                        ],
                       ],
                     ),
                   ),
@@ -131,7 +148,7 @@ class Home extends StatelessWidget {
                     padding: const EdgeInsets.only(
                       left: 16,
                       top: 25,
-                      bottom: 10,
+                      bottom: 0,
                     ),
                     child: Text(
                       'All Products :',
@@ -158,11 +175,11 @@ class Home extends StatelessWidget {
                         mainAxisSpacing: 15,
                         crossAxisSpacing: 10,
                       ),
-                      itemCount: 9,
+                      itemCount: allProducts.length,
                       itemBuilder: (context, index) {
                         return _buildProductGridCard(
-                          'Costway Foldable Baby\nStroller 2 in 1',
-                          'KES 23909',
+                          allProducts[index]['title']!,
+                          allProducts[index]['price']!,
                         );
                       },
                     ),
@@ -205,7 +222,14 @@ class Home extends StatelessWidget {
                   ),
                 ],
               ),
-              Column(
+              GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => Profile()),
+                );
+              },
+              child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.person, color: Colors.white, size: 28),
@@ -216,7 +240,8 @@ class Home extends StatelessWidget {
                   ),
                 ],
               ),
-            ],
+            ),
+          ],  
           ),
         ),
       ),
@@ -258,9 +283,9 @@ class Home extends StatelessWidget {
       case 'Toys':
         return Icons.toys;
       case 'Diapers':
-        return Icons.child_friendly;
+        return Icons.baby_changing_station;
       case 'Toddler Beds':
-        return Icons.bed;
+        return Icons.bedroom_baby;
       default:
         return Icons.category;
     }
@@ -282,7 +307,7 @@ class Home extends StatelessWidget {
             height: 120,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: BabyRose.withOpacity(0.3),
+              color: BabyRose,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(10),
                 topRight: Radius.circular(10),
@@ -356,7 +381,7 @@ class Home extends StatelessWidget {
             height: 80,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: BabyRose.withOpacity(0.3),
+              color: BabyRose,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(10),
                 topRight: Radius.circular(10),
