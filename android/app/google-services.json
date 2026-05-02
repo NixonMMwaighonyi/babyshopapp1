@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "969982613269",
+    "project_id": "babyshopapp1",
+    "storage_bucket": "babyshopapp1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:969982613269:android:9d8015a156861770e87b1c",
+        "android_client_info": {
+          "package_name": "com.example.babyshopapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "969982613269-uq3r5u8h1a8m637n4837pfas0srra8kn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBKmu_xsX5fF8ZfAKlxx9gdimQzPZSSWZg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "969982613269-uq3r5u8h1a8m637n4837pfas0srra8kn.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "969982613269-b5od7bmcbcg90cjagqunrscmlho9b4ns.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.babyshopapp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
