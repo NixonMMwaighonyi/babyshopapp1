@@ -65,5 +65,4 @@ class DefaultFirebaseOptions {
     storageBucket: 'babyshopapp1.firebasestorage.app',
     iosBundleId: 'com.example.babyshopapp',
   );
-
 }
