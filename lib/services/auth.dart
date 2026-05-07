@@ -1,85 +1,72 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:babyshopapp/models/userModel.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+// ── Admin email ──────────────────────────────────────────────────────────────
+// Any account registered (or already existing) with this email gets role=admin.
+const String kAdminEmail = 'mwalughanixon252@gmail.com';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  String? lastAuthError;
+  static const Duration _authTimeout = Duration(seconds: 15);
+  static const Duration _firestoreTimeout = Duration(seconds: 15);
 
-  // Create user object based on firebase user
-  UserModel? _userFromFirebaseUser(User? userObj) {
-    return userObj != null ? UserModel(uid: userObj.uid) : null;
-  }
+  Stream<User?> get user => _auth.authStateChanges();
 
-  // Auth change user Stream
-  Stream<UserModel?> get user {
-    return _auth.authStateChanges().map(
-      (User? userObj) => _userFromFirebaseUser(userObj),
-    );
-  }
-
-  // Sign in Anon
-  Future signInAnon() async {
+  // ── Sign in ────────────────────────────────────────────────────────────────
+  Future<dynamic> signInWithEmailAndPassword(String email, String password) async {
     try {
-      UserCredential result = await _auth.signInAnonymously();
-      User? user = result.user;
-      return _userFromFirebaseUser(user);
+      lastAuthError = null;
+      final result = await _auth
+          .signInWithEmailAndPassword(email: email, password: password)
+          .timeout(_authTimeout);
+      return result.user;
     } catch (e) {
       print(e.toString());
+      lastAuthError = e.toString();
       return null;
     }
   }
 
-  // Sign in Email & Password
-  Future signInWithEmailAndPassword(String email, String password) async {
+  // ── Register ───────────────────────────────────────────────────────────────
+  Future<dynamic> registerWithEmailAndPassword(String email, String password, {String name = ''}) async {
     try {
-      UserCredential result = await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      User? user = result.user;
+      lastAuthError = null;
+      final result = await _auth
+          .createUserWithEmailAndPassword(email: email, password: password)
+          .timeout(_authTimeout);
 
-      return null;
-    } on FirebaseAuthException catch (e) {
-      if (e.code == 'user-not-found') {
-        return 'No user found for that email.';
-      } else if (e.code == 'wrong-password') {
-        return 'Incorrect password.';
-      } else if (e.code == 'invalid-email') {
-        return 'The email address is not valid.';
-      } else if (e.code == 'too-many-requests') {
-        return 'Too many attempts. Try again later.';
-      }
-      return e.message;
+      final normalizedEmail = email.trim().toLowerCase();
+      final isHardcodedAdmin = normalizedEmail == kAdminEmail.toLowerCase();
+      final adminDoc = await _db
+          .collection('admin_emails')
+          .doc(normalizedEmail)
+          .get()
+          .timeout(_firestoreTimeout);
+
+      final role = (isHardcodedAdmin || adminDoc.exists) ? 'admin' : 'customer';
+      await _db
+          .collection('users')
+          .doc(result.user!.uid)
+          .set({
+            'role': role,
+            'email': email,
+            'name': name,
+            'phone': '',
+            'address': '',
+            'createdAt': FieldValue.serverTimestamp(),
+          })
+          .timeout(_firestoreTimeout);
+      return result.user;
     } catch (e) {
-      return e.toString();
+      print(e.toString());
+      lastAuthError = e.toString();
+      return null;
     }
   }
 
-  // Register with Email & Password
-  Future<String?> registerWithEmailAndPassword({
-    required String name,
-    required String email,
-    required String password,
-  }) async {
-    try {
-      await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      // Registration successful
-      return null;
-    } on FirebaseAuthException catch (e) {
-      if (e.code == 'weak-password') {
-        return 'The password provided is too weak.';
-      } else if (e.code == 'email-already-in-use') {
-        return 'The account already exists for that email.';
-      }
-      return e.message;
-    } catch (e) {
-      return e.toString();
-    }
-  }
-
-  // Sign out
+  // ── Sign out ───────────────────────────────────────────────────────────────
   Future signOut() async {
     try {
       return await _auth.signOut();
@@ -88,4 +75,84 @@ class AuthService {
       return null;
     }
   }
+
+  // ── Get role ───────────────────────────────────────────────────────────────
+  // Also handles legacy accounts that have no Firestore doc yet by creating one.
+  Future<String> getUserRole(String uid) async {
+    try {
+      final doc = await _db.collection('users').doc(uid).get().timeout(_firestoreTimeout);
+      if (!doc.exists) {
+        // Legacy account — create doc with correct role
+        final currentUser = _auth.currentUser;
+        final email = (currentUser?.email ?? '').trim().toLowerCase();
+        final isHardcodedAdmin = email == kAdminEmail.toLowerCase();
+        final adminDoc = await _db
+            .collection('admin_emails')
+            .doc(email)
+            .get()
+            .timeout(_firestoreTimeout);
+        final role = (isHardcodedAdmin || adminDoc.exists) ? 'admin' : 'customer';
+        await _db
+            .collection('users')
+            .doc(uid)
+            .set({
+              'role': role,
+              'email': email,
+              'name': '',
+              'phone': '',
+              'address': '',
+              'createdAt': FieldValue.serverTimestamp(),
+            })
+            .timeout(_firestoreTimeout);
+        return role;
+      }
+      final data = doc.data() as Map<String, dynamic>;
+      var role = data['role'] ?? 'customer';
+
+      // If account was created earlier as customer but email is now allowed as admin,
+      // upgrade it automatically.
+      if (role != 'admin') {
+        final currentUser = _auth.currentUser;
+        final email = (currentUser?.email ?? '').trim().toLowerCase();
+        if (email.isNotEmpty) {
+          final isHardcodedAdmin = email == kAdminEmail.toLowerCase();
+          final adminDoc = await _db
+              .collection('admin_emails')
+              .doc(email)
+              .get()
+              .timeout(_firestoreTimeout);
+
+          if (isHardcodedAdmin || adminDoc.exists) {
+            role = 'admin';
+            await _db.collection('users').doc(uid).update({'role': role}).timeout(_firestoreTimeout);
+          }
+        }
+      }
+
+      return role;
+    } catch (e) {
+      return 'customer';
+    }
+  }
+
+  // ── Get full user data ─────────────────────────────────────────────────────
+  Future<Map<String, dynamic>?> getUserData(String uid) async {
+    try {
+      final doc = await _db.collection('users').doc(uid).get();
+      return doc.exists ? doc.data() as Map<String, dynamic> : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // ── Update user data ───────────────────────────────────────────────────────
+  Future<bool> updateUserData(String uid, Map<String, dynamic> data) async {
+    try {
+      await _db.collection('users').doc(uid).update(data);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
 }
+
