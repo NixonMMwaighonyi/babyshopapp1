@@ -1,12 +1,16 @@
+// Main shop shell: browse products, cart badge, orders & profile from the bottom bar.
 import 'package:babyshopapp/Screens/home/cartScreen.dart';
 import 'package:babyshopapp/Screens/home/orderHistory.dart';
 import 'package:babyshopapp/Screens/home/productDetail.dart';
 import 'package:babyshopapp/Screens/home/profile.dart';
 import 'package:babyshopapp/models/cart_model.dart';
+import 'package:babyshopapp/services/auth.dart';
 import 'package:babyshopapp/services/productService.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+/// Customer home with shop tab, orders shortcut, profile, and cart in the app bar.
 class Home extends StatefulWidget {
   const Home({super.key});
 
@@ -52,6 +56,10 @@ class _HomeState extends State<Home> {
   void initState() {
     super.initState();
     _productService.ensureDefaultStockForExistingProducts();
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      AuthService().recordLastActive(uid);
+    }
   }
 
   @override
@@ -81,7 +89,7 @@ class _HomeState extends State<Home> {
           controller: _searchController,
           onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
           decoration: InputDecoration(
-            hintText: 'Search baby products...',
+            hintText: 'Search by name, brand, or category...',
             prefixIcon: const Icon(Icons.search, color: teal),
             suffixIcon: _searchQuery.isNotEmpty
                 ? IconButton(
@@ -168,7 +176,12 @@ class _HomeState extends State<Home> {
                 }
                 var products = snapshot.data ?? [];
                 if (_searchQuery.isNotEmpty) {
-                  products = products.where((p) => p.title.toLowerCase().contains(_searchQuery)).toList();
+                  final q = _searchQuery;
+                  products = products.where((p) {
+                    return p.title.toLowerCase().contains(q) ||
+                        p.brand.toLowerCase().contains(q) ||
+                        p.category.toLowerCase().contains(q);
+                  }).toList();
                 }
                 if (products.isEmpty) {
                   return Center(
@@ -215,6 +228,7 @@ class _HomeState extends State<Home> {
   }
 }
 
+/// Product grid with search + category chips (used inside [Home] tab 0).
 class _ShopBody extends StatelessWidget {
   const _ShopBody();
 
@@ -222,6 +236,7 @@ class _ShopBody extends StatelessWidget {
   Widget build(BuildContext context) => const SizedBox.shrink();
 }
 
+/// Tappable grid tile — opens [ProductDetail].
 class _ProductCard extends StatelessWidget {
   final Product product;
   const _ProductCard({required this.product});
@@ -259,7 +274,7 @@ class _ProductCard extends StatelessWidget {
                           product.imageUrl,
                           fit: BoxFit.cover,
                           alignment: Alignment.topCenter,
-                          errorBuilder: (_, __, ___) =>
+                          errorBuilder: (_, _, _) =>
                               Icon(product.icon, size: 56, color: product.color),
                         ),
                       )
@@ -273,6 +288,13 @@ class _ProductCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (product.brand.isNotEmpty)
+                      Text(
+                        product.brand,
+                        style: const TextStyle(fontSize: 10, color: Colors.grey),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     Text(
                       product.title,
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),

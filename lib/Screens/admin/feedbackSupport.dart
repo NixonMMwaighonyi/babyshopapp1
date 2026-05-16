@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:babyshopapp/services/productService.dart';
 
+/// Admin inbox for profile “Contact Support” messages; optional filter by customer email.
 class FeedbackSupportPage extends StatelessWidget {
-  const FeedbackSupportPage({super.key});
+  /// When set, only feedback rows whose [userEmail] matches (case-insensitive).
+  final String? filterUserEmail;
+
+  const FeedbackSupportPage({super.key, this.filterUserEmail});
 
   static const Color teal = Color(0xFF6ecdd4);
   static const Color rose = Color(0xFFf79c81);
@@ -18,7 +22,14 @@ class FeedbackSupportPage extends StatelessWidget {
           return const Center(child: CircularProgressIndicator(color: teal));
         }
 
-        final feedbackItems = snapshot.data ?? [];
+        var feedbackItems = List<Map<String, dynamic>>.from(snapshot.data ?? []);
+        final filter = filterUserEmail?.trim().toLowerCase();
+        if (filter != null && filter.isNotEmpty) {
+          feedbackItems = feedbackItems
+              .where((e) => (e['userEmail'] ?? '').toString().toLowerCase() == filter)
+              .toList();
+        }
+
         if (feedbackItems.isEmpty) {
           return Center(
             child: Column(
@@ -26,9 +37,12 @@ class FeedbackSupportPage extends StatelessWidget {
               children: [
                 Icon(Icons.mark_email_unread_outlined, size: 72, color: teal.withOpacity(0.5)),
                 const SizedBox(height: 10),
-                const Text(
-                  'No customer feedback yet',
-                  style: TextStyle(fontFamily: 'DynaPuff', fontSize: 16, color: darkGrey),
+                Text(
+                  filter != null && filter.isNotEmpty
+                      ? 'No support messages from this email yet'
+                      : 'No customer feedback yet',
+                  style: const TextStyle(fontFamily: 'DynaPuff', fontSize: 16, color: darkGrey),
+                  textAlign: TextAlign.center,
                 ),
               ],
             ),

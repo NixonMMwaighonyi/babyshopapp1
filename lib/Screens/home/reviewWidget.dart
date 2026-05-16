@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
+/// Single review row (stars + comment) on a product detail screen.
 class ReviewWidget extends StatelessWidget {
   final String username;
   final double rating;
   final String comment;
-  final bool isAdmin; // To show 'Delete' or 'Reply' buttons to admin
+  final bool isAdmin;
 
   const ReviewWidget({
     super.key,

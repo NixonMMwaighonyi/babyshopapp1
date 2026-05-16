@@ -1,3 +1,4 @@
+// Cart review before checkout — quantities respect live stock on each product.
 import 'package:babyshopapp/Screens/home/checkoutScreen.dart';
 import 'package:babyshopapp/models/cart_model.dart';
 import 'package:flutter/material.dart';

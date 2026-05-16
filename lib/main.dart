@@ -1,6 +1,6 @@
+// App entry: Firebase init, global cart state, and auth-driven navigation via [Wrapper].
 import 'package:babyshopapp/Screens/wrapper.dart';
 import 'package:babyshopapp/models/cart_model.dart';
-import 'package:babyshopapp/services/auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -20,10 +20,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        StreamProvider<User?>.value(
-          value: AuthService().user,
-          initialData: null,
-          catchError: (_, __) => null,
+        // Bind directly to Firebase so auth state always drives the UI after login.
+        StreamProvider<User?>(
+          create: (_) => FirebaseAuth.instance.authStateChanges(),
+          initialData: FirebaseAuth.instance.currentUser,
         ),
         ChangeNotifierProvider(create: (_) => CartProvider()),
       ],
