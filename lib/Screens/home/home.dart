@@ -14,6 +14,25 @@ import 'package:provider/provider.dart';
 class Home extends StatefulWidget {
   const Home({super.key});
 
+  List<Map<String, String>> premiumProducts = [];
+  List<Map<String, String>> allProducts = [];
+
+  @override
+  void initState() {
+    super.initState();
+    premiumProducts = [
+      {
+        'title': 'Costway Foldable Baby\nStroller 2 in 1',
+        'price': 'KES 23909',
+        'description': 'Great quality',
+      },
+    ];
+
+    allProducts = [
+      {'title': 'Costway Foldable Baby\nStroller 2 in 1', 'price': 'KES 23909'},
+    ];
+  }
+
   @override
   State<Home> createState() => _HomeState();
 }
