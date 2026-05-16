@@ -3,6 +3,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 import '../models/cart_model.dart';
 
+/// Firestore + Storage for products, orders, reviews, feedback, and checkout stock updates.
 class ProductService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
@@ -31,6 +32,14 @@ class ProductService {
       .snapshots()
       .map((s) => s.docs.map((d) => Review.fromFirestore(d)).toList());
 
+  Stream<List<SellerReview>> sellerReviewsStream(String productId) => _db
+      .collection('products')
+      .doc(productId)
+      .collection('seller_reviews')
+      .orderBy('date', descending: true)
+      .snapshots()
+      .map((s) => s.docs.map((d) => SellerReview.fromFirestore(d)).toList());
+
   // ── Admin CRUD ─────────────────────────────────────────────────────────────
   Future<bool> addProduct({
     required String title,
@@ -38,6 +47,8 @@ class ProductService {
     required String description,
     required String category,
     String imageUrl = '',
+    String brand = '',
+    String sellerName = 'BabyShopHub Official',
   }) async {
     try {
       await _db.collection('products').add({
@@ -45,6 +56,10 @@ class ProductService {
         'priceValue': priceValue,
         'description': description,
         'category': category,
+        'brand': brand,
+        'sellerName': sellerName,
+        'sellerRating': 4.8,
+        'sellerReviewCount': 0,
         'imageUrl': imageUrl,
         'stock': 10,
         'rating': 4.0,
@@ -106,6 +121,35 @@ class ProductService {
     }
   }
 
+  Future<bool> addSellerReview(String productId, SellerReview review) async {
+    try {
+      final batch = _db.batch();
+      final ref = _db.collection('products').doc(productId).collection('seller_reviews').doc();
+      batch.set(ref, {
+        'userName': review.userName,
+        'rating': review.rating,
+        'comment': review.comment,
+        'date': FieldValue.serverTimestamp(),
+      });
+      final prodDoc = await _db.collection('products').doc(productId).get();
+      if (prodDoc.exists) {
+        final data = prodDoc.data() as Map<String, dynamic>;
+        final currentCount = (data['sellerReviewCount'] as int?) ?? 0;
+        final currentRating = (data['sellerRating'] as num?)?.toDouble() ?? 4.8;
+        final newCount = currentCount + 1;
+        final newRating = ((currentRating * currentCount) + review.rating) / newCount;
+        batch.update(_db.collection('products').doc(productId), {
+          'sellerReviewCount': newCount,
+          'sellerRating': double.parse(newRating.toStringAsFixed(1)),
+        });
+      }
+      await batch.commit();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   // ── Orders ─────────────────────────────────────────────────────────────────
   Stream<List<AppOrder>> allOrdersStream() => _db
       .collection('orders')
@@ -126,13 +170,24 @@ class ProductService {
         return orders;
       });
 
-  Future<bool> placeOrder({
+  Stream<AppOrder?> orderStream(String orderId) => _db
+      .collection('orders')
+      .doc(orderId)
+      .snapshots()
+      .map((s) {
+        if (!s.exists) return null;
+        return AppOrder.fromFirestore(s);
+      });
+
+  /// Checkout: verifies stock, decrements counts, and creates an `orders` document.
+  Future<String?> placeOrder({
     required String userId,
     required String userEmail,
     required List<CartItem> cartItems,
     required double totalAmount,
     required String shippingAddress,
   }) async {
+    String? newOrderId;
     try {
       await _db.runTransaction((transaction) async {
         for (final item in cartItems) {
@@ -150,6 +205,7 @@ class ProductService {
         }
 
         final orderRef = _db.collection('orders').doc();
+        newOrderId = orderRef.id;
         transaction.set(orderRef, {
           'userId': userId,
           'userEmail': userEmail,
@@ -167,9 +223,9 @@ class ProductService {
           'date': FieldValue.serverTimestamp(),
         });
       });
-      return true;
+      return newOrderId;
     } catch (e) {
-      return false;
+      return null;
     }
   }
 
@@ -261,6 +317,10 @@ class ProductService {
     for (final p in samples) {
       await _db.collection('products').add({
         ...p,
+        'brand': p['title'].toString().split(' ').first,
+        'sellerName': 'BabyShopHub Official',
+        'sellerRating': 4.8,
+        'sellerReviewCount': 0,
         'imageUrl': '',
         'stock': 10,
         'rating': 4.0,

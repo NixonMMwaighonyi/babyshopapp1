@@ -2,8 +2,9 @@ import 'package:babyshopapp/Screens/authenticate/register.dart';
 import 'package:babyshopapp/services/auth.dart';
 import 'package:flutter/material.dart';
 
+/// Email/password login — errors show on the right field; forgot-password sends a reset link.
 class SignIn extends StatefulWidget {
-  final Function? toggleView; // Added support for toggleView if used by wrapper
+  final Function? toggleView;
   const SignIn({super.key, this.toggleView});
 
   @override
@@ -22,11 +23,97 @@ class _SignInState extends State<SignIn> {
   final TextEditingController _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
-  String _error = '';
+  // Field-level errors from AuthService (wrong email vs wrong password).
+  String _emailError = '';
+  String _passwordError = '';
+  String _generalError = '';
   bool _loading = false;
   bool _obscurePassword = true;
 
   final AuthService _auth = AuthService();
+
+  void _clearErrors() {
+    _emailError = '';
+    _passwordError = '';
+    _generalError = '';
+  }
+
+  /// Firebase emails a reset link; we pre-fill the email they typed on the login form.
+  void _showForgotPasswordDialog() {
+    final resetEmailCtrl = TextEditingController(text: _emailController.text.trim());
+    var sending = false;
+
+    showDialog<void>(
+      context: context,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (ctx, setSt) => AlertDialog(
+          title: const Text('Forgot password?', style: TextStyle(fontFamily: 'DynaPuff')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Enter your account email and we\'ll send a link to reset your password.',
+                style: TextStyle(height: 1.35, color: babyDarkGrey, fontSize: 14),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: resetEmailCtrl,
+                keyboardType: TextInputType.emailAddress,
+                enabled: !sending,
+                decoration: _inputDecoration('Email...', Icons.email_outlined),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: sending ? null : () => Navigator.pop(ctx),
+              child: Text('Cancel', style: TextStyle(color: babyDarkGrey)),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: babyTorquoise),
+              onPressed: sending
+                  ? null
+                  : () async {
+                      final messenger = ScaffoldMessenger.of(context);
+                      final email = resetEmailCtrl.text.trim();
+                      if (email.isEmpty) {
+                        messenger.showSnackBar(
+                          const SnackBar(content: Text('Enter your email address.')),
+                        );
+                        return;
+                      }
+                      setSt(() => sending = true);
+                      final err = await _auth.sendPasswordResetEmail(email);
+                      if (!ctx.mounted) return;
+                      setSt(() => sending = false);
+                      if (err == null) {
+                        Navigator.pop(ctx);
+                        messenger.showSnackBar(
+                          SnackBar(
+                            content: Text('Password reset link sent to $email'),
+                            backgroundColor: babyTorquoise,
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(ctx).showSnackBar(
+                          SnackBar(content: Text(err), backgroundColor: babyRose),
+                        );
+                      }
+                    },
+              child: sending
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Text('Send link', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    ).then((_) => resetEmailCtrl.dispose());
+  }
 
   @override
   void dispose() {
@@ -114,23 +201,32 @@ class _SignInState extends State<SignIn> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Email Field
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
+                    onChanged: (_) {
+                      if (_emailError.isNotEmpty) setState(() => _emailError = '');
+                    },
                     validator: (val) => val!.isEmpty ? 'Enter an email' : null,
-                    decoration: _inputDecoration('Email...', Icons.email_outlined),
+                    decoration: _inputDecoration(
+                      'Email...',
+                      Icons.email_outlined,
+                      errorText: _emailError.isEmpty ? null : _emailError,
+                    ),
                   ),
                   const SizedBox(height: 24),
 
-                  // Password Field
                   TextFormField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
+                    onChanged: (_) {
+                      if (_passwordError.isNotEmpty) setState(() => _passwordError = '');
+                    },
                     validator: (val) => val!.isEmpty ? 'Enter your password' : null,
                     decoration: _inputDecoration(
                       'Password...',
                       Icons.lock_outline,
+                      errorText: _passwordError.isEmpty ? null : _passwordError,
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
@@ -144,22 +240,33 @@ class _SignInState extends State<SignIn> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
-
-                  // Error Message
-                  if (_error.isNotEmpty)
+                  // Reset link — does not sign the user in; check inbox/spam.
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: _loading ? null : _showForgotPasswordDialog,
+                      style: TextButton.styleFrom(
+                        foregroundColor: babyTorquoise,
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                      ),
+                      child: const Text(
+                        'Forgot password?',
+                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                      ),
+                    ),
+                  ),
+                  if (_generalError.isNotEmpty)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 12.0),
+                      padding: const EdgeInsets.only(bottom: 8.0),
                       child: Text(
-                        _error,
+                        _generalError,
                         textAlign: TextAlign.center,
                         style: TextStyle(color: babyRose, fontSize: 14),
                       ),
                     ),
 
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 10),
 
-                  // Login Button
                   ElevatedButton(
                     onPressed: _loading
                         ? null
@@ -167,34 +274,43 @@ class _SignInState extends State<SignIn> {
                       if (_formKey.currentState!.validate()) {
                         setState(() {
                           _loading = true;
-                          _error = '';
+                          _clearErrors();
                         });
 
                         final email = _emailController.text.trim();
                         final password = _passwordController.text.trim();
 
-                        // Calling Sign in method
                         dynamic result = await _auth.signInWithEmailAndPassword(
                           email,
                           password,
                         );
 
                         if (result == null) {
-                          final err = _auth.lastAuthError;
+                          // Map AuthService errors onto the email/password fields.
                           setState(() {
-                            _error = err == null
-                                ? 'Could not sign in with those credentials'
-                                : _friendlyAuthError(err);
+                            _emailError = _auth.lastSignInEmailError ?? '';
+                            _passwordError = _auth.lastSignInPasswordError ?? '';
+                            _generalError = _auth.lastAuthError ?? '';
+                            if (_emailError.isEmpty && _passwordError.isEmpty && _generalError.isEmpty) {
+                              _generalError = 'Could not sign in. Please try again.';
+                            }
                             _loading = false;
                           });
                         } else {
+                          await _auth.recordLastLogin(result.uid);
                           setState(() {
                             _loading = false;
                           });
-                          // On success, your 'Wrapper' will automatically switch to Home
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Login Successful!")),
-                          );
+                          // Let [StreamProvider] rebuild first, then clear any pushed routes
+                          // (e.g. Register) so [Wrapper] is visible with the signed-in user.
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (!context.mounted) return;
+                            Navigator.of(context).popUntil((route) => route.isFirst);
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Login successful!')),
+                            );
+                          });
                         }
                       }
                     },
@@ -232,23 +348,19 @@ class _SignInState extends State<SignIn> {
     );
   }
 
-  String _friendlyAuthError(String raw) {
-    final msg = raw.toLowerCase();
-    if (msg.contains('user-not-found')) return 'No account found for this email.';
-    if (msg.contains('wrong-password')) return 'Wrong password for this email.';
-    if (msg.contains('invalid-email')) return 'Invalid email format.';
-    if (msg.contains('too-many-requests')) return 'Too many attempts. Please wait and try again.';
-    return 'Sign in failed: ${raw}';
-  }
-
-  // Helper decoration to maintain UI consistency
-  InputDecoration _inputDecoration(String hint, IconData icon, {Widget? suffixIcon}) {
+  InputDecoration _inputDecoration(String hint, IconData icon, {Widget? suffixIcon, String? errorText}) {
+    final errorBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(18.0),
+      borderSide: BorderSide(color: babyRose, width: 1.5),
+    );
     return InputDecoration(
       hintStyle: const TextStyle(color: Color(0xFFcdd9da)),
       hintText: hint,
       prefixIcon: Icon(icon, size: 25),
       prefixIconColor: const Color(0xFFcdd9da),
       suffixIcon: suffixIcon,
+      errorText: errorText,
+      errorStyle: TextStyle(color: babyRose, fontSize: 13),
       filled: true,
       fillColor: babyBackgroundColor,
       contentPadding: const EdgeInsets.symmetric(vertical: 18.0, horizontal: 16.0),
@@ -264,6 +376,8 @@ class _SignInState extends State<SignIn> {
         borderRadius: BorderRadius.circular(18.0),
         borderSide: BorderSide(color: babyTorquoise),
       ),
+      errorBorder: errorBorder,
+      focusedErrorBorder: errorBorder,
     );
   }
 }

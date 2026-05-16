@@ -1,5 +1,7 @@
+// Lists the signed-in customer's orders; tap through to track delivery status.
 import 'package:babyshopapp/models/cart_model.dart';
 import 'package:babyshopapp/services/productService.dart';
+import 'package:babyshopapp/Screens/home/track_order_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -115,7 +117,19 @@ class OrderHistoryScreen extends StatelessWidget {
                           const Divider(),
                           if (order.shippingAddress.isNotEmpty)
                             Text('Shipping to: ${order.shippingAddress}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 10),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton.icon(
+                              onPressed: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => TrackOrderScreen(orderId: order.id)),
+                              ),
+                              icon: const Icon(Icons.map_outlined, size: 18, color: torquoise),
+                              label: const Text('Track delivery', style: TextStyle(color: torquoise, fontWeight: FontWeight.w600)),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
                         ],
                       ),
                     ),

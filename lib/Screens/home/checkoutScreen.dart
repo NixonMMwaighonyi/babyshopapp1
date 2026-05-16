@@ -1,5 +1,7 @@
+// Shipping form + place order (deducts stock in Firestore, then clears the cart).
 import 'package:babyshopapp/models/cart_model.dart';
 import 'package:babyshopapp/services/productService.dart';
+import 'package:babyshopapp/Screens/home/order_confirmation_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -33,6 +35,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     super.dispose();
   }
 
+  /// Writes the order and lowers product stock in one Firestore transaction.
   Future<void> _placeOrder(CartProvider cart) async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _placing = true);
@@ -44,23 +47,30 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
 
     final address = '${_addressCtrl.text.trim()}, ${_cityCtrl.text.trim()}';
-    final success = await _ps.placeOrder(
+    final total = cart.totalAmount;
+    final count = cart.itemCount;
+    final itemsSnapshot = List<CartItem>.from(cart.items);
+
+    final orderId = await _ps.placeOrder(
       userId: user.uid,
       userEmail: user.email ?? '',
-      cartItems: cart.items,
-      totalAmount: cart.totalAmount,
+      cartItems: itemsSnapshot,
+      totalAmount: total,
       shippingAddress: address,
     );
 
-    if (success) {
+    if (orderId != null) {
       cart.clearCart();
       if (mounted) {
-        Navigator.popUntil(context, (r) => r.isFirst);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Order placed successfully. You can track it in My Orders.'),
-            backgroundColor: Color(0xFF2e9fb4),
-            duration: Duration(seconds: 3),
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => OrderConfirmationScreen(
+              orderId: orderId,
+              totalAmount: total,
+              itemCount: count,
+              shippingSummary: address,
+            ),
           ),
         );
       }

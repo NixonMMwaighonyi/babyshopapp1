@@ -1,3 +1,4 @@
+// Product page: add to cart, product reviews, seller reviews; admins can edit from here too.
 import 'package:babyshopapp/models/cart_model.dart';
 import 'package:babyshopapp/services/auth.dart';
 import 'package:babyshopapp/services/productService.dart';
@@ -25,12 +26,16 @@ class _ProductDetailState extends State<ProductDetail> {
 
   final ProductService _ps = ProductService();
   final _reviewCommentCtrl = TextEditingController();
+  final _sellerCommentCtrl = TextEditingController();
   double _reviewRating = 5.0;
+  double _sellerReviewRating = 5.0;
   bool _submitting = false;
+  bool _sellerSubmitting = false;
 
   @override
   void dispose() {
     _reviewCommentCtrl.dispose();
+    _sellerCommentCtrl.dispose();
     super.dispose();
   }
 
@@ -93,11 +98,81 @@ class _ProductDetailState extends State<ProductDetail> {
     );
   }
 
+  void _showSellerReviewDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setS) => AlertDialog(
+          title: const Text('Rate seller', style: TextStyle(fontFamily: 'DynaPuff')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('How was your experience with ${widget.product.sellerName}?', style: const TextStyle(fontSize: 13)),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  5,
+                  (i) => IconButton(
+                    icon: Icon(Icons.star, color: i < _sellerReviewRating ? Colors.amber : Colors.grey[300]),
+                    onPressed: () => setS(() => _sellerReviewRating = (i + 1).toDouble()),
+                  ),
+                ),
+              ),
+              TextField(
+                controller: _sellerCommentCtrl,
+                maxLines: 3,
+                decoration: const InputDecoration(hintText: 'Optional comment...', border: OutlineInputBorder()),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: torquoise),
+              onPressed: _sellerSubmitting
+                  ? null
+                  : () async {
+                      setS(() => _sellerSubmitting = true);
+                      final user = FirebaseAuth.instance.currentUser;
+                      final userData = user != null ? await AuthService().getUserData(user.uid) : null;
+                      final name = userData?['name'] ?? user?.email ?? 'Anonymous';
+                      final ok = await _ps.addSellerReview(
+                        widget.product.id,
+                        SellerReview(
+                          userName: name,
+                          rating: _sellerReviewRating,
+                          comment: _sellerCommentCtrl.text.trim(),
+                          date: DateTime.now(),
+                        ),
+                      );
+                      _sellerCommentCtrl.clear();
+                      setS(() => _sellerSubmitting = false);
+                      if (!ctx.mounted) return;
+                      Navigator.pop(ctx);
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(ok ? 'Seller rating saved!' : 'Could not save seller rating.'),
+                          backgroundColor: ok ? teal : rose,
+                        ),
+                      );
+                    },
+              child: const Text('Submit', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showEditDialog() {
     final titleCtrl = TextEditingController(text: widget.product.title);
     final priceCtrl = TextEditingController(text: widget.product.priceValue.toString());
-    final descCtrl  = TextEditingController(text: widget.product.description);
+    final descCtrl = TextEditingController(text: widget.product.description);
     final imageCtrl = TextEditingController(text: widget.product.imageUrl);
+    final brandCtrl = TextEditingController(text: widget.product.brand);
+    final sellerCtrl = TextEditingController(text: widget.product.sellerName);
     final picker = ImagePicker();
     XFile? selectedImage;
     bool uploadingImage = false;
@@ -116,6 +191,10 @@ class _ProductDetailState extends State<ProductDetail> {
                 TextField(controller: priceCtrl, decoration: const InputDecoration(labelText: 'Price (\$)'), keyboardType: TextInputType.number),
                 const SizedBox(height: 8),
                 TextField(controller: descCtrl, decoration: const InputDecoration(labelText: 'Description'), maxLines: 3),
+                const SizedBox(height: 8),
+                TextField(controller: brandCtrl, decoration: const InputDecoration(labelText: 'Brand')),
+                const SizedBox(height: 8),
+                TextField(controller: sellerCtrl, decoration: const InputDecoration(labelText: 'Seller name')),
                 const SizedBox(height: 8),
                 TextField(
                   controller: imageCtrl,
@@ -179,6 +258,10 @@ class _ProductDetailState extends State<ProductDetail> {
                             double.tryParse(priceCtrl.text.trim()) ?? widget.product.priceValue,
                         'description': descCtrl.text.trim(),
                         'imageUrl': imageCtrl.text.trim(),
+                        'brand': brandCtrl.text.trim(),
+                        'sellerName': sellerCtrl.text.trim().isEmpty
+                            ? 'BabyShopHub Official'
+                            : sellerCtrl.text.trim(),
                       });
                       if (context.mounted) {
                         Navigator.pop(context);
@@ -235,7 +318,7 @@ class _ProductDetailState extends State<ProductDetail> {
                       widget.product.imageUrl,
                       fit: BoxFit.cover,
                       alignment: Alignment.topCenter,
-                      errorBuilder: (_, __, ___) =>
+                      errorBuilder: (_, _, _) =>
                           Icon(widget.product.icon, size: 100, color: widget.product.color),
                     )
                   : Icon(widget.product.icon, size: 100, color: widget.product.color),
@@ -273,10 +356,43 @@ class _ProductDetailState extends State<ProductDetail> {
                       ),
                     ),
                   ]),
+                  if (widget.product.brand.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text('Brand: ${widget.product.brand}', style: TextStyle(color: Colors.grey[800], fontSize: 13)),
+                  ],
                   const SizedBox(height: 16),
                   const Text('Description', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 6),
                   Text(widget.product.description.isNotEmpty ? widget.product.description : 'No description available.', style: const TextStyle(color: Colors.black87, height: 1.5)),
+                  const SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: teal.withOpacity(0.35)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Seller', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                        const SizedBox(height: 6),
+                        Text(widget.product.sellerName, style: const TextStyle(fontSize: 15)),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            const Icon(Icons.verified_user_outlined, size: 18, color: torquoise),
+                            const SizedBox(width: 6),
+                            Text(
+                              '${widget.product.sellerRating.toStringAsFixed(1)} · ${widget.product.sellerReviewCount} seller reviews',
+                              style: const TextStyle(fontSize: 13, color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 24),
                   if (!widget.isAdmin) ...[
                     SizedBox(
@@ -294,6 +410,34 @@ class _ProductDetailState extends State<ProductDetail> {
                         ),
                         onPressed: widget.product.stock > 0 ? _addToCart : null,
                       ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Seller feedback', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        TextButton.icon(
+                          icon: const Icon(Icons.rate_review_outlined, size: 16, color: torquoise),
+                          label: const Text('Rate seller', style: TextStyle(color: torquoise, fontSize: 13)),
+                          onPressed: _showSellerReviewDialog,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    StreamBuilder<List<SellerReview>>(
+                      stream: _ps.sellerReviewsStream(widget.product.id),
+                      builder: (context, snap) {
+                        if (snap.connectionState == ConnectionState.waiting) {
+                          return const Center(child: Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator(color: teal)));
+                        }
+                        final reviews = snap.data ?? [];
+                        if (reviews.isEmpty) {
+                          return const Text('No seller reviews yet.', style: TextStyle(color: Colors.grey));
+                        }
+                        return Column(
+                          children: reviews.map((r) => _SellerReviewTile(review: r)).toList(),
+                        );
+                      },
                     ),
                     const SizedBox(height: 28),
                     Row(
@@ -323,6 +467,40 @@ class _ProductDetailState extends State<ProductDetail> {
                 ],
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SellerReviewTile extends StatelessWidget {
+  final SellerReview review;
+  const _SellerReviewTile({required this.review});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(review.userName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                Row(children: List.generate(5, (i) => Icon(Icons.star, size: 14, color: i < review.rating ? Colors.amber : Colors.grey[300]))),
+              ],
+            ),
+            if (review.comment.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(review.comment),
+            ],
+            const SizedBox(height: 4),
+            Text('${review.date.day}/${review.date.month}/${review.date.year}', style: const TextStyle(fontSize: 11, color: Colors.grey)),
           ],
         ),
       ),

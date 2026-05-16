@@ -2,8 +2,8 @@ import 'package:babyshopapp/Screens/authenticate/sign-in.dart';
 import 'package:babyshopapp/services/auth.dart';
 import 'package:flutter/material.dart';
 
+/// New customer sign-up — creates Firebase Auth user + Firestore `users` profile (role from `admin_emails`).
 class Register extends StatefulWidget {
-  // Added toggleView support if you are using it in your AuthService wrapper logic
   final Function? toggleView;
   const Register({super.key, this.toggleView});
 
@@ -12,7 +12,6 @@ class Register extends StatefulWidget {
 }
 
 class _RegisterState extends State<Register> {
-  // Your Brand Colors
   final Color babyBackgroundColor = const Color(0xFFeef9fa);
   final Color babyTeal = const Color(0xFF6ecdd4);
   final Color babyRose = const Color(0xFFf79c81);
@@ -185,11 +184,10 @@ class _RegisterState extends State<Register> {
                           _error = '';
                         });
 
-                        // Fixed: Passing parameters to match your AuthService
                         dynamic result = await _auth.registerWithEmailAndPassword(
                           _emailController.text.trim(),
                           _passwordController.text.trim(),
-                          // Ensure your AuthService method accepts name if you want to save it
+                          name: _nameController.text.trim(),
                         );
 
                         if (result == null) {
@@ -199,7 +197,7 @@ class _RegisterState extends State<Register> {
                             _loading = false;
                           });
                         } else {
-                          // Success - The wrapper will usually handle navigation
+                          // [Wrapper] picks up auth state and routes to Home or Admin.
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text("Account Created!")),
                           );
@@ -244,7 +242,6 @@ class _RegisterState extends State<Register> {
     );
   }
 
-  // Helper to keep the code clean and maintain your style
   InputDecoration _inputDecoration(String hint, IconData icon, {Widget? suffixIcon}) {
     return InputDecoration(
       hintStyle: const TextStyle(color: Color(0xFFcdd9da)),
@@ -275,6 +272,6 @@ class _RegisterState extends State<Register> {
     if (msg.contains('email-already-in-use')) return 'This email is already registered.';
     if (msg.contains('weak-password')) return 'Password is too weak.';
     if (msg.contains('invalid-email')) return 'Invalid email format.';
-    return 'Registration failed: ${raw}';
+    return 'Registration failed: $raw';
   }
 }
