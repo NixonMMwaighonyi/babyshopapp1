@@ -14,24 +14,7 @@ import 'package:provider/provider.dart';
 class Home extends StatefulWidget {
   const Home({super.key});
 
-  List<Map<String, String>> premiumProducts = [];
-  List<Map<String, String>> allProducts = [];
-
-  @override
-  void initState() {
-    super.initState();
-    premiumProducts = [
-      {
-        'title': 'Costway Foldable Baby\nStroller 2 in 1',
-        'price': 'KES 23909',
-        'description': 'Great quality',
-      },
-    ];
-
-    allProducts = [
-      {'title': 'Costway Foldable Baby\nStroller 2 in 1', 'price': 'KES 23909'},
-    ];
-  }
+  
 
   @override
   State<Home> createState() => _HomeState();
@@ -44,6 +27,18 @@ class _HomeState extends State<Home> {
   static const Color rose       = Color(0xFFf79c81);
   static const Color torquoise  = Color(0xFF2e9fb4);
   static const Color darkGrey   = Color(0xFF575757);
+
+  final List<Map<String, String>> premiumProducts = [
+    {
+      'title': 'Costway Foldable Baby\nStroller 2 in 1',
+      'price': 'KES 23909',
+      'description': 'Great quality',
+    },
+  ];
+
+  final List<Map<String, String>> allProducts = [
+    {'title': 'Costway Foldable Baby\nStroller 2 in 1', 'price': 'KES 23909'},
+  ];
 
   final ProductService _productService = ProductService();
   final TextEditingController _searchController = TextEditingController();
@@ -100,6 +95,7 @@ class _HomeState extends State<Home> {
     final cart = Provider.of<CartProvider>(context);
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: bgColor,
       appBar: AppBar(
         backgroundColor: Colors.white,

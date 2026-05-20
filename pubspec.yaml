@@ -109,10 +109,10 @@ flutter:
   #       - asset: fonts/TrajanPro_Bold.ttf
   #         weight: 700
 
-flutter_launcher_icons:
-    android: true
-    ios: true
-    image_path: "assets/png/Logo03.png"
-    # For Android 8.0+ adaptive icons, use:
-    # adaptive_icon_background: "#ffffff" # or an image path
-    # adaptive_icon_foreground: "assets/icon/foreground.png"
+# flutter_launcher_icons:
+#     android: "adaptive_icon"
+#     ios: true
+#     image_path: "assets/png/biggerLogo01.png"
+#     # For Android 8.0+ adaptive icons, use:
+#     # adaptive_icon_background: "#ffffff" # or an image path
+#     # adaptive_icon_foreground: "assets/icon/foreground.png"

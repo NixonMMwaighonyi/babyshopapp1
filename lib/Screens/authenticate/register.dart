@@ -197,10 +197,11 @@ class _RegisterState extends State<Register> {
                             _loading = false;
                           });
                         } else {
-                          // [Wrapper] picks up auth state and routes to Home or Admin.
+                          if (!mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text("Account Created!")),
                           );
+                          Navigator.of(context).popUntil((route) => route.isFirst);
                         }
                       }
                     },
