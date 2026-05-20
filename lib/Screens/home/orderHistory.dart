@@ -110,7 +110,13 @@ class OrderHistoryScreen extends StatelessWidget {
                           ...order.items.map((item) => Padding(
                             padding: const EdgeInsets.symmetric(vertical: 3),
                             child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                              Text('${item.productTitle} x${item.quantity}'),
+                              Expanded(
+                                child: Text(
+                                  '${item.productTitle} x${item.quantity}', 
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              SizedBox(width: 8,),
                               Text('\$${(item.priceValue * item.quantity).toStringAsFixed(2)}', style: TextStyle(color: torquoise)),
                             ]),
                           )),

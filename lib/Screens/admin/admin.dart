@@ -31,11 +31,11 @@ class _AdminPanelState extends State<AdminPanel> {
   int _currentIndex = 0;
   final AuthService _auth = AuthService();
 
-  static const Color bgColor   = Color(0xFFeef9fa);
-  static const Color teal      = Color(0xFF6ecdd4);
-  static const Color rose      = Color(0xFFf79c81);
+  static const Color bgColor = Color(0xFFeef9fa);
+  static const Color teal = Color(0xFF6ecdd4);
+  static const Color rose = Color(0xFFf79c81);
   static const Color torquoise = Color(0xFF2e9fb4);
-  static const Color darkGrey  = Color(0xFF575757);
+  static const Color darkGrey = Color(0xFF575757);
 
   final List<Widget> _pages = const [
     _OrderMonitoringPage(),
@@ -87,7 +87,10 @@ class _AdminPanelState extends State<AdminPanel> {
                     color: torquoise.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.dashboard_customize_outlined, color: torquoise),
+                  child: const Icon(
+                    Icons.dashboard_customize_outlined,
+                    color: torquoise,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -95,10 +98,10 @@ class _AdminPanelState extends State<AdminPanel> {
                     _currentIndex == 0
                         ? 'Orders Command Center'
                         : _currentIndex == 1
-                            ? 'Inventory Studio'
-                            : _currentIndex == 2
-                                ? 'Feedback Inbox'
-                                : 'User Directory',
+                        ? 'Inventory Studio'
+                        : _currentIndex == 2
+                        ? 'Feedback Inbox'
+                        : 'User Directory',
                     style: const TextStyle(
                       fontFamily: 'DynaPuff',
                       fontSize: 16,
@@ -120,10 +123,22 @@ class _AdminPanelState extends State<AdminPanel> {
         backgroundColor: Colors.white,
         onTap: (i) => setState(() => _currentIndex = i),
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.dashboard_outlined), label: 'Orders'),
-          BottomNavigationBarItem(icon: Icon(Icons.inventory_2_outlined), label: 'Inventory'),
-          BottomNavigationBarItem(icon: Icon(Icons.message_outlined), label: 'Feedback'),
-          BottomNavigationBarItem(icon: Icon(Icons.group_outlined), label: 'Users'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard_outlined),
+            label: 'Orders',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.inventory_2_outlined),
+            label: 'Inventory',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.message_outlined),
+            label: 'Feedback',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.group_outlined),
+            label: 'Users',
+          ),
         ],
       ),
     );
@@ -135,37 +150,53 @@ class _AdminPanelState extends State<AdminPanel> {
 class _OrderMonitoringPage extends StatelessWidget {
   const _OrderMonitoringPage();
 
-  static const Color teal      = Color(0xFF6ecdd4);
-  static const Color rose      = Color(0xFFf79c81);
+  static const Color teal = Color(0xFF6ecdd4);
+  static const Color rose = Color(0xFFf79c81);
   static const Color torquoise = Color(0xFF2e9fb4);
 
   static Color _statusColor(String status) {
     switch (status.toLowerCase()) {
-      case 'confirmed': return Colors.green;
-      case 'shipped':   return Colors.blue;
-      case 'delivered': return Colors.teal;
-      case 'cancelled': return Colors.red;
-      default:          return Colors.orange;
+      case 'confirmed':
+        return Colors.green;
+      case 'shipped':
+        return Colors.blue;
+      case 'delivered':
+        return Colors.teal;
+      case 'cancelled':
+        return Colors.red;
+      default:
+        return Colors.orange;
     }
   }
 
   void _showStatusDialog(BuildContext context, AppOrder order) {
-    final statuses = ['Processing', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled'];
+    final statuses = [
+      'Processing',
+      'Confirmed',
+      'Shipped',
+      'Delivered',
+      'Cancelled',
+    ];
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         title: Text('Update Order #${order.id.substring(0, 6).toUpperCase()}'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          children: statuses.map((s) => RadioListTile<String>(
-            title: Text(s),
-            value: s, groupValue: order.status,
-            activeColor: torquoise,
-            onChanged: (v) async {
-              await ProductService().updateOrderStatus(order.id, v!);
-              if (context.mounted) Navigator.pop(context);
-            },
-          )).toList(),
+          children: statuses
+              .map(
+                (s) => RadioListTile<String>(
+                  title: Text(s),
+                  value: s,
+                  groupValue: order.status,
+                  activeColor: torquoise,
+                  onChanged: (v) async {
+                    await ProductService().updateOrderStatus(order.id, v!);
+                    if (context.mounted) Navigator.pop(context);
+                  },
+                ),
+              )
+              .toList(),
         ),
       ),
     );
@@ -176,14 +207,29 @@ class _OrderMonitoringPage extends StatelessWidget {
     return StreamBuilder<List<AppOrder>>(
       stream: ProductService().allOrdersStream(),
       builder: (context, snap) {
-        if (snap.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator(color: Color(0xFF6ecdd4)));
+        if (snap.connectionState == ConnectionState.waiting)
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF6ecdd4)),
+          );
         final orders = snap.data ?? [];
         if (orders.isEmpty) {
-          return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Icon(Icons.receipt_long_outlined, size: 80, color: teal.withOpacity(0.4)),
-            const SizedBox(height: 16),
-            const Text('No orders yet', style: TextStyle(fontSize: 18, color: Colors.grey)),
-          ]));
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.receipt_long_outlined,
+                  size: 80,
+                  color: teal.withOpacity(0.4),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'No orders yet',
+                  style: TextStyle(fontSize: 18, color: Colors.grey),
+                ),
+              ],
+            ),
+          );
         }
         return ListView.builder(
           padding: const EdgeInsets.all(16),
@@ -192,36 +238,98 @@ class _OrderMonitoringPage extends StatelessWidget {
             final order = orders[i];
             return Card(
               margin: const EdgeInsets.only(bottom: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               child: ExpansionTile(
-                leading: CircleAvatar(backgroundColor: const Color(0xFFeef9fa), child: Icon(Icons.shopping_bag_outlined, color: torquoise)),
-                title: Text('Order #${order.id.substring(0, 6).toUpperCase()}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text('${order.userEmail} · \$${order.totalAmount.toStringAsFixed(2)}'),
+                leading: CircleAvatar(
+                  backgroundColor: const Color(0xFFeef9fa),
+                  child: Icon(Icons.shopping_bag_outlined, color: torquoise),
+                ),
+                title: Text(
+                  'Order #${order.id.substring(0, 6).toUpperCase()}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  '${order.userEmail} · \$${order.totalAmount.toStringAsFixed(2)}',
+                  maxLines: 2,
+                  softWrap: true,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 trailing: GestureDetector(
                   onTap: () => _showStatusDialog(context, order),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(color: _statusColor(order.status).withOpacity(0.12), borderRadius: BorderRadius.circular(20)),
-                    child: Text(order.status, style: TextStyle(color: _statusColor(order.status), fontWeight: FontWeight.bold, fontSize: 12)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _statusColor(order.status).withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      order.status,
+                      style: TextStyle(
+                        color: _statusColor(order.status),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
                   ),
                 ),
                 children: [
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      const Divider(),
-                      ...order.items.map((item) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 3),
-                        child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                          Text('${item.productTitle} x${item.quantity}'),
-                          Text('\$${(item.priceValue * item.quantity).toStringAsFixed(2)}', style: TextStyle(color: torquoise)),
-                        ]),
-                      )),
-                      const Divider(),
-                      Text('Shipping: ${order.shippingAddress}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                      const SizedBox(height: 4),
-                      Text('Date: ${order.date.day}/${order.date.month}/${order.date.year}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                    ]),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Divider(),
+                        ...order.items.map(
+                          (item) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 3),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    '${item.productTitle} x${item.quantity}',
+                                    softWrap: true,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '\$${(item.priceValue * item.quantity).toStringAsFixed(2)}',
+                                  style: TextStyle(color: torquoise),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const Divider(),
+                        Text(
+                          'Shipping: ${order.shippingAddress}',
+                          softWrap: true,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Date: ${order.date.day}/${order.date.month}/${order.date.year}',
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -233,13 +341,192 @@ class _OrderMonitoringPage extends StatelessWidget {
   }
 }
 
+class AddProductDialog extends StatefulWidget {
+  const AddProductDialog({super.key});
+
+  @override
+  State<AddProductDialog> createState() => _AddProductDialogState();
+}
+
+class _AddProductDialogState extends State<AddProductDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final titleCtrl = TextEditingController();
+  final brandCtrl = TextEditingController();
+  final sellerCtrl = TextEditingController(text: 'BabyShopHub Official');
+  final priceCtrl = TextEditingController();
+  final descCtrl = TextEditingController();
+  final imageCtrl = TextEditingController();
+  XFile? selectedImage;
+  bool isUploadingImage = false;
+  String selectedCat = 'Newborn Essentials';
+
+  static const Color torquoise = Color(0xFF2e9fb4);
+
+  final List<String> cats = [
+    'Newborn Essentials',
+    'Feeding',
+    'Diapering',
+    'Bath & Skincare',
+    'Nursery & Bedding',
+    'Strollers & Gear',
+    'Toys & Learning',
+    'Health & Safety',
+    'Clothing & Shoes',
+  ];
+
+  @override
+  void dispose() {
+    titleCtrl.dispose();
+    brandCtrl.dispose();
+    sellerCtrl.dispose();
+    priceCtrl.dispose();
+    descCtrl.dispose();
+    imageCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> pickImage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1400,
+      imageQuality: 85,
+    );
+    if (picked == null) return;
+    setState(() {
+      selectedImage = picked;
+      isUploadingImage = true;
+    });
+
+    // Upload and set URL (ProductService.uploadProductImage returns String? or null)
+    final uploadedUrl = await ProductService().uploadProductImage(picked.path);
+    if (uploadedUrl != null) imageCtrl.text = uploadedUrl;
+    if (!mounted) return;
+    setState(() => isUploadingImage = false);
+  }
+
+  Future<void> _onAdd() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final title = titleCtrl.text.trim();
+    final brand = brandCtrl.text.trim();
+    final seller = sellerCtrl.text.trim().isEmpty ? 'BabyShopHub Official' : sellerCtrl.text.trim();
+    final price = double.tryParse(priceCtrl.text.trim()) ?? 0.0;
+    final description = descCtrl.text.trim();
+    final imageUrl = imageCtrl.text.trim();
+
+    setState(() => isUploadingImage = true);
+    await ProductService().addProduct(
+      title: title,
+      priceValue: price,
+      description: description,
+      category: selectedCat,
+      imageUrl: imageUrl,
+      brand: brand,
+      sellerName: seller,
+    );
+    if (!mounted) return;
+    setState(() => isUploadingImage = false);
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Product added'), backgroundColor: Color(0xFF2e9fb4)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Add New Product', style: TextStyle(fontFamily: 'DynaPuff')),
+      content: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            TextFormField(
+              controller: titleCtrl,
+              decoration: const InputDecoration(labelText: 'Product Title', border: OutlineInputBorder()),
+              validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter a title' : null,
+            ),
+            const SizedBox(height: 10),
+            TextFormField(
+              controller: brandCtrl,
+              decoration: const InputDecoration(labelText: 'Brand (optional)', border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 10),
+            TextFormField(
+              controller: sellerCtrl,
+              decoration: const InputDecoration(labelText: 'Seller name', border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 10),
+            TextFormField(
+              controller: priceCtrl,
+              keyboardType: TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(labelText: 'Price (e.g. 19.99)', border: OutlineInputBorder()),
+              validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter price' : null,
+            ),
+            const SizedBox(height: 10),
+            TextFormField(
+              controller: descCtrl,
+              maxLines: 3,
+              decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 10),
+            TextFormField(
+              controller: imageCtrl,
+              keyboardType: TextInputType.url,
+              decoration: const InputDecoration(labelText: 'Image URL (optional)', border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: isUploadingImage ? null : pickImage,
+                    icon: const Icon(Icons.photo_library_outlined, color: torquoise),
+                    label: Text(isUploadingImage ? 'Uploading image...' : 'Choose from gallery', style: const TextStyle(color: torquoise)),
+                    style: OutlinedButton.styleFrom(side: const BorderSide(color: torquoise)),
+                  ),
+                ),
+              ],
+            ),
+            if (selectedImage != null) const SizedBox(height: 10),
+            if (selectedImage != null)
+              SizedBox(
+                height: 140,
+                width: double.infinity,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.file(File(selectedImage!.path), fit: BoxFit.cover),
+                ),
+              ),
+            const SizedBox(height: 10),
+            DropdownButtonFormField<String>(
+              value: selectedCat,
+              items: cats.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+              onChanged: (v) => setState(() => selectedCat = v ?? cats.first),
+              decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
+            ),
+          ]),
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        ElevatedButton(
+          onPressed: isUploadingImage ? null : _onAdd,
+          style: ElevatedButton.styleFrom(backgroundColor: torquoise),
+          child: isUploadingImage
+              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              : const Text('Add Product', style: TextStyle(color: Colors.white)),
+        ),
+      ],
+    );
+  }
+}
+
 // ── Inventory Management ─────────────────────────────────────────────────────
 /// Add/edit/delete products and seed sample catalog items.
 class _InventoryPage extends StatelessWidget {
   const _InventoryPage();
 
-  static const Color teal      = Color(0xFF6ecdd4);
-  static const Color rose      = Color(0xFFf79c81);
+  static const Color teal = Color(0xFF6ecdd4);
+  static const Color rose = Color(0xFFf79c81);
   static const Color torquoise = Color(0xFF2e9fb4);
 
   void _showAddDialog(BuildContext context) {
@@ -247,7 +534,7 @@ class _InventoryPage extends StatelessWidget {
     final brandCtrl = TextEditingController();
     final sellerCtrl = TextEditingController(text: 'BabyShopHub Official');
     final priceCtrl = TextEditingController();
-    final descCtrl  = TextEditingController();
+    final descCtrl = TextEditingController();
     final imageCtrl = TextEditingController();
     final picker = ImagePicker();
     XFile? selectedImage;
@@ -265,119 +552,7 @@ class _InventoryPage extends StatelessWidget {
       'Clothing & Shoes',
     ];
 
-    showDialog(
-      context: context,
-      builder: (_) => StatefulBuilder(
-        builder: (ctx, setS) => AlertDialog(
-          title: const Text('Add New Product', style: TextStyle(fontFamily: 'DynaPuff')),
-          content: SingleChildScrollView(
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'Product Title', border: OutlineInputBorder())),
-              const SizedBox(height: 10),
-              TextField(controller: brandCtrl, decoration: const InputDecoration(labelText: 'Brand (optional)', border: OutlineInputBorder())),
-              const SizedBox(height: 10),
-              TextField(controller: sellerCtrl, decoration: const InputDecoration(labelText: 'Seller name', border: OutlineInputBorder())),
-              const SizedBox(height: 10),
-              TextField(controller: priceCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Price (\$)', border: OutlineInputBorder())),
-              const SizedBox(height: 10),
-              TextField(controller: descCtrl, maxLines: 3, decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder())),
-              const SizedBox(height: 10),
-              TextField(
-                controller: imageCtrl,
-                keyboardType: TextInputType.url,
-                decoration: const InputDecoration(
-                  labelText: 'Image URL (optional)',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: isUploadingImage
-                          ? null
-                          : () async {
-                              final picked = await picker.pickImage(
-                                source: ImageSource.gallery,
-                                maxWidth: 1400,
-                                imageQuality: 85,
-                              );
-                              if (picked == null) return;
-
-                              setS(() {
-                                selectedImage = picked;
-                                isUploadingImage = true;
-                              });
-
-                              final uploadedUrl =
-                                  await ProductService().uploadProductImage(picked.path);
-
-                              if (uploadedUrl != null) {
-                                imageCtrl.text = uploadedUrl;
-                              }
-
-                              setS(() {
-                                isUploadingImage = false;
-                              });
-                            },
-                      icon: const Icon(Icons.photo_library_outlined, color: torquoise),
-                      label: Text(
-                        isUploadingImage ? 'Uploading image...' : 'Choose from gallery',
-                        style: const TextStyle(color: torquoise),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: torquoise),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              if (selectedImage != null) ...[
-                const SizedBox(height: 10),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: Image.file(
-                    File(selectedImage!.path),
-                    height: 90,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ],
-              const SizedBox(height: 10),
-              DropdownButtonFormField<String>(
-                initialValue: selectedCat,
-                decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
-                items: cats.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                onChanged: (v) => setS(() => selectedCat = v ?? 'Newborn Essentials'),
-              ),
-            ]),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: torquoise),
-              onPressed: () async {
-                if (titleCtrl.text.isEmpty || priceCtrl.text.isEmpty) return;
-                if (isUploadingImage) return;
-                await ProductService().addProduct(
-                  title: titleCtrl.text.trim(),
-                  priceValue: double.tryParse(priceCtrl.text.trim()) ?? 0.0,
-                  description: descCtrl.text.trim(),
-                  category: selectedCat,
-                  imageUrl: imageCtrl.text.trim(),
-                  brand: brandCtrl.text.trim(),
-                  sellerName: sellerCtrl.text.trim().isEmpty ? 'BabyShopHub Official' : sellerCtrl.text.trim(),
-                );
-                if (ctx.mounted) Navigator.pop(ctx);
-              },
-              child: const Text('Add Product', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      ),
-    );
+    showDialog(context: context, builder: (_) => const AddProductDialog());
   }
 
   void _showSeedConfirm(BuildContext context) {
@@ -385,19 +560,32 @@ class _InventoryPage extends StatelessWidget {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Seed Sample Products'),
-        content: const Text('This will add 6 sample baby products to your Firestore database. Only do this once.'),
+        content: const Text(
+          'This will add 6 sample baby products to your Firestore database. Only do this once.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: torquoise),
             onPressed: () async {
               await ProductService().seedSampleProducts();
               if (context.mounted) {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sample products added!'), backgroundColor: Color(0xFF2e9fb4)));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Sample products added!'),
+                    backgroundColor: Color(0xFF2e9fb4),
+                  ),
+                );
               }
             },
-            child: const Text('Add Samples', style: TextStyle(color: Colors.white)),
+            child: const Text(
+              'Add Samples',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -417,84 +605,150 @@ class _InventoryPage extends StatelessWidget {
       body: StreamBuilder<List<Product>>(
         stream: ProductService().allProductsStream,
         builder: (context, snap) {
-          if (snap.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator(color: Color(0xFF6ecdd4)));
+          if (snap.connectionState == ConnectionState.waiting)
+            return const Center(
+              child: CircularProgressIndicator(color: Color(0xFF6ecdd4)),
+            );
           final products = snap.data ?? [];
           if (products.isEmpty) {
             return Center(
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Icon(Icons.inventory_2_outlined, size: 80, color: teal.withOpacity(0.4)),
-                const SizedBox(height: 16),
-                const Text('No products yet', style: TextStyle(fontSize: 18, color: Colors.grey)),
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  icon: const Icon(Icons.auto_fix_high, color: torquoise),
-                  label: const Text('Add Sample Products', style: TextStyle(color: torquoise)),
-                  style: OutlinedButton.styleFrom(side: const BorderSide(color: torquoise)),
-                  onPressed: () => _showSeedConfirm(context),
-                ),
-              ]),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.inventory_2_outlined,
+                    size: 80,
+                    color: teal.withOpacity(0.4),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'No products yet',
+                    style: TextStyle(fontSize: 18, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.auto_fix_high, color: torquoise),
+                    label: const Text(
+                      'Add Sample Products',
+                      style: TextStyle(color: torquoise),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: torquoise),
+                    ),
+                    onPressed: () => _showSeedConfirm(context),
+                  ),
+                ],
+              ),
             );
           }
           return GridView.builder(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, childAspectRatio: 0.82, crossAxisSpacing: 14, mainAxisSpacing: 14),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 0.82,
+              crossAxisSpacing: 14,
+              mainAxisSpacing: 14,
+            ),
             itemCount: products.length,
             itemBuilder: (_, i) {
               final p = products[i];
               return GestureDetector(
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProductDetail(product: p, isAdmin: true))),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ProductDetail(product: p, isAdmin: true),
+                  ),
+                ),
                 child: Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(color: teal.withOpacity(0.3)),
-                    boxShadow: [BoxShadow(color: teal.withOpacity(0.12), blurRadius: 8, offset: const Offset(0, 3))],
-                  ),
-                  child: Column(children: [
-                    Expanded(
-                      flex: 3,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: p.color.withOpacity(0.12),
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-                        ),
-                        child: p.imageUrl.isNotEmpty
-                            ? ClipRRect(
-                                borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-                                child: Image.network(
-                                  p.imageUrl,
-                                  fit: BoxFit.cover,
-                                  alignment: Alignment.topCenter,
-                                  errorBuilder: (_, _, _) =>
-                                      Icon(p.icon, size: 50, color: p.color),
-                                ),
-                              )
-                            : Icon(p.icon, size: 50, color: p.color),
+                    boxShadow: [
+                      BoxShadow(
+                        color: teal.withOpacity(0.12),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
                       ),
-                    ),
-                    Expanded(
-                      flex: 2,
-                      child: Padding(
-                        padding: const EdgeInsets.all(10),
-                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Text(p.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12), maxLines: 2, overflow: TextOverflow.ellipsis),
-                          Text(p.price, style: TextStyle(color: torquoise, fontSize: 12)),
-                          const Spacer(),
-                          Row(children: [
-                            const Icon(Icons.inventory_2_outlined, size: 11, color: Colors.grey),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                '${p.category} · ${p.stock} left',
-                                style: const TextStyle(color: Colors.grey, fontSize: 10),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: p.color.withOpacity(0.12),
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(18),
+                            ),
+                          ),
+                          child: p.imageUrl.isNotEmpty
+                              ? ClipRRect(
+                                  borderRadius: const BorderRadius.vertical(
+                                    top: Radius.circular(18),
+                                  ),
+                                  child: Image.network(
+                                    p.imageUrl,
+                                    fit: BoxFit.cover,
+                                    alignment: Alignment.topCenter,
+                                    errorBuilder: (_, _, _) =>
+                                        Icon(p.icon, size: 50, color: p.color),
+                                  ),
+                                )
+                              : Icon(p.icon, size: 50, color: p.color),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: Padding(
+                          padding: const EdgeInsets.all(10),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                p.title,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                                maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                            ),
-                          ]),
-                        ]),
+                              Text(
+                                p.price,
+                                style: TextStyle(
+                                  color: torquoise,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              const Spacer(),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.inventory_2_outlined,
+                                    size: 11,
+                                    color: Colors.grey,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      '${p.category} · ${p.stock} left',
+                                      style: const TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 10,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                  ]),
+                    ],
+                  ),
                 ),
               );
             },
@@ -520,6 +774,7 @@ class _UserManagementPageState extends State<_UserManagementPage> {
 
   final _emailLookupCtrl = TextEditingController();
   bool _lookupBusy = false;
+  bool _notesExpaned = false;
 
   @override
   void dispose() {
@@ -547,7 +802,12 @@ class _UserManagementPageState extends State<_UserManagementPage> {
             'Ask the customer to log in once in BabyShopHub, or add a users/{uid} document in the Firebase console.',
             style: const TextStyle(height: 1.35),
           ),
-          actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('OK'),
+            ),
+          ],
         ),
       );
       return;
@@ -560,8 +820,15 @@ class _UserManagementPageState extends State<_UserManagementPage> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Profile found'),
-        content: Text('Email: ${row['email']}\nName: ${name.isEmpty ? '—' : name}\nRole: $role\nUID: $uid'),
-        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
+        content: Text(
+          'Email: ${row['email']}\nName: ${name.isEmpty ? '—' : name}\nRole: $role\nUID: $uid',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('OK'),
+          ),
+        ],
       ),
     );
   }
@@ -572,7 +839,10 @@ class _UserManagementPageState extends State<_UserManagementPage> {
       MaterialPageRoute<void>(
         builder: (_) => Scaffold(
           appBar: AppBar(
-            title: Text('Inquiries · $email', style: const TextStyle(fontFamily: 'DynaPuff', fontSize: 16)),
+            title: Text(
+              'Inquiries · $email',
+              style: const TextStyle(fontFamily: 'DynaPuff', fontSize: 16),
+            ),
             backgroundColor: Colors.white,
             foregroundColor: Colors.black87,
             elevation: 0,
@@ -602,7 +872,10 @@ class _UserManagementPageState extends State<_UserManagementPage> {
           style: const TextStyle(height: 1.35),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(backgroundColor: rose),
@@ -612,7 +885,10 @@ class _UserManagementPageState extends State<_UserManagementPage> {
       ),
     );
     if (confirmed != true || !context.mounted) return;
-    final ok = await AuthService().deleteUserProfileDocument(uid, adminUid: adminUid);
+    final ok = await AuthService().deleteUserProfileDocument(
+      uid,
+      adminUid: adminUid,
+    );
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -652,7 +928,10 @@ class _UserManagementPageState extends State<_UserManagementPage> {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Close'),
+          ),
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
@@ -681,26 +960,40 @@ class _UserManagementPageState extends State<_UserManagementPage> {
               borderRadius: BorderRadius.circular(14),
               side: BorderSide(color: teal.withOpacity(0.45)),
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            child: Theme(
+              data: Theme.of(
+                context,
+              ).copyWith(dividerColor: Colors.transparent),
+              child: ExpansionTile(
+                initiallyExpanded: _notesExpaned,
+                onExpansionChanged: (expanded) =>
+                    setState(() => _notesExpaned = expanded),
+                title: Row(
+                  children: [
+                    Icon(Icons.info_outline, size: 20, color: torquoise),
+                    const SizedBox(width: 8),
+                    Text(
+                      'User management',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: Colors.grey[900],
+                      ),
+                    ),
+                  ],
+                ),
+                childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 children: [
-                  Row(
-                    children: [
-                      Icon(Icons.info_outline, size: 20, color: torquoise),
-                      const SizedBox(width: 8),
-                      Text('User management', style: TextStyle(fontWeight: FontWeight.w700, color: Colors.grey[900])),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
                   Text(
                     '• Each row is a Firestore "users" profile. The role menu grants Admin (this dashboard) or Customer (shop).\n'
                     '• Activity: Last login is saved at sign-in; last active updates when someone opens the shop or this admin app.\n'
                     '• Inquiries: Use ⋮ on a row → Support inquiries to read or reply to that customer\'s feedback (same as Feedback tab, filtered).\n'
                     '• Role changes apply after that person signs out and signs in again. You cannot change your own role here.\n'
                     '• Delete profile (⋮) removes their Firestore users row only; use the Firebase console Authentication tab to remove the login if needed.',
-                    style: TextStyle(height: 1.4, fontSize: 13, color: Colors.grey[850]),
+                    style: TextStyle(
+                      height: 1.4,
+                      // fontSize: 13,
+                      color: Colors.grey[850],
+                    ),
                   ),
                 ],
               ),
@@ -710,13 +1003,21 @@ class _UserManagementPageState extends State<_UserManagementPage> {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
           child: Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Look up by email', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey[800])),
+                  Text(
+                    'Look up by email',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[800],
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
@@ -727,16 +1028,27 @@ class _UserManagementPageState extends State<_UserManagementPage> {
                           decoration: InputDecoration(
                             hintText: 'e.g. trevormiles2000m@gmail.com',
                             isDense: true,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
                       ),
                       const SizedBox(width: 8),
                       FilledButton(
                         onPressed: _lookupBusy ? null : _lookupEmail,
-                        style: FilledButton.styleFrom(backgroundColor: torquoise),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: torquoise,
+                        ),
                         child: _lookupBusy
-                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
                             : const Text('Check'),
                       ),
                     ],
@@ -751,7 +1063,9 @@ class _UserManagementPageState extends State<_UserManagementPage> {
             stream: AuthService().allUsersStream(),
             builder: (context, snap) {
               if (snap.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator(color: Color(0xFF6ecdd4)));
+                return const Center(
+                  child: CircularProgressIndicator(color: Color(0xFF6ecdd4)),
+                );
               }
               if (snap.hasError) {
                 return Center(
@@ -760,9 +1074,19 @@ class _UserManagementPageState extends State<_UserManagementPage> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.lock_outline, size: 48, color: rose.withOpacity(0.85)),
+                        Icon(
+                          Icons.lock_outline,
+                          size: 48,
+                          color: rose.withOpacity(0.85),
+                        ),
                         const SizedBox(height: 12),
-                        const Text('Could not load users', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        const Text(
+                          'Could not load users',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
                         const SizedBox(height: 8),
                         Text(
                           '${snap.error}\n\n'
@@ -777,7 +1101,11 @@ class _UserManagementPageState extends State<_UserManagementPage> {
                 );
               }
               var users = List<Map<String, dynamic>>.from(snap.data ?? []);
-              users.sort((a, b) => (a['email'] ?? '').toString().compareTo((b['email'] ?? '').toString()));
+              users.sort(
+                (a, b) => (a['email'] ?? '').toString().compareTo(
+                  (b['email'] ?? '').toString(),
+                ),
+              );
 
               if (users.isEmpty) {
                 return Center(
@@ -786,9 +1114,19 @@ class _UserManagementPageState extends State<_UserManagementPage> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.group_outlined, size: 72, color: teal.withOpacity(0.45)),
+                        Icon(
+                          Icons.group_outlined,
+                          size: 72,
+                          color: teal.withOpacity(0.45),
+                        ),
                         const SizedBox(height: 16),
-                        const Text('No rows in Firestore "users"', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+                        const Text(
+                          'No rows in Firestore "users"',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 17,
+                          ),
+                        ),
                         const SizedBox(height: 12),
                         Text(
                           'This screen lists Cloud Firestore profiles (collection users), not the Authentication user list.\n\n'
@@ -796,7 +1134,10 @@ class _UserManagementPageState extends State<_UserManagementPage> {
                           '• If the account was made only in the Firebase console under Authentication, there may be no users document yet — have them open the app and log in once.\n'
                           '• If Firestore security rules block listing users, fix rules so admins can read users (see error above if the load failed).',
                           textAlign: TextAlign.center,
-                          style: TextStyle(height: 1.4, color: Colors.grey[800]),
+                          style: TextStyle(
+                            height: 1.4,
+                            color: Colors.grey[800],
+                          ),
                         ),
                       ],
                     ),
@@ -822,26 +1163,49 @@ class _UserManagementPageState extends State<_UserManagementPage> {
                     elevation: 0.5,
                     child: ListTile(
                       isThreeLine: true,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       leading: CircleAvatar(
                         backgroundColor: torquoise.withOpacity(0.15),
                         child: Text(
-                          (name.isNotEmpty ? name : email).isNotEmpty ? (name.isNotEmpty ? name : email)[0].toUpperCase() : '?',
-                          style: const TextStyle(color: torquoise, fontWeight: FontWeight.bold),
+                          (name.isNotEmpty ? name : email).isNotEmpty
+                              ? (name.isNotEmpty ? name : email)[0]
+                                    .toUpperCase()
+                              : '?',
+                          style: const TextStyle(
+                            color: torquoise,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                      title: Text(name.isNotEmpty ? name : email, maxLines: 1, overflow: TextOverflow.ellipsis),
+                      title: Text(
+                        name.isNotEmpty ? name : email,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (name.isNotEmpty) Text(email, style: const TextStyle(fontSize: 12)),
-                          Text('UID: ${uid.length > 8 ? uid.substring(0, 8) : uid}…', style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+                          if (name.isNotEmpty)
+                            Text(email, style: const TextStyle(fontSize: 12)),
+                          Text(
+                            'UID: ${uid.length > 8 ? uid.substring(0, 8) : uid}…',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[600],
+                            ),
+                          ),
                           const SizedBox(height: 4),
                           Text(
                             'Joined ${_formatUserFirestoreTime(u['createdAt'])} · '
                             'Login ${_formatUserFirestoreTime(u['lastLoginAt'])} · '
                             'Active ${_formatUserFirestoreTime(u['lastActiveAt'])}',
-                            style: TextStyle(fontSize: 10, color: Colors.grey[700]),
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey[700],
+                            ),
                           ),
                         ],
                       ),
@@ -849,23 +1213,42 @@ class _UserManagementPageState extends State<_UserManagementPage> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           PopupMenuButton<String>(
-                            icon: const Icon(Icons.more_vert, color: Color(0xFF2e9fb4)),
+                            icon: const Icon(
+                              Icons.more_vert,
+                              color: Color(0xFF2e9fb4),
+                            ),
                             onSelected: (value) {
                               if (value == 'details') {
                                 _showUserAccountDialog(context, u);
                               } else if (value == 'inquiries') {
                                 _openUserInquiries(context, email);
                               } else if (value == 'delete') {
-                                _confirmAndDeleteUserProfile(context, uid: uid, email: email, adminUid: selfUid);
+                                _confirmAndDeleteUserProfile(
+                                  context,
+                                  uid: uid,
+                                  email: email,
+                                  adminUid: selfUid,
+                                );
                               }
                             },
                             itemBuilder: (ctx) => [
-                              const PopupMenuItem(value: 'details', child: Text('Account details')),
-                              const PopupMenuItem(value: 'inquiries', child: Text('Support inquiries')),
+                              const PopupMenuItem(
+                                value: 'details',
+                                child: Text('Account details'),
+                              ),
+                              const PopupMenuItem(
+                                value: 'inquiries',
+                                child: Text('Support inquiries'),
+                              ),
                               PopupMenuItem(
                                 value: 'delete',
                                 enabled: !isSelf,
-                                child: Text('Delete profile…', style: TextStyle(color: isSelf ? Colors.grey : rose)),
+                                child: Text(
+                                  'Delete profile…',
+                                  style: TextStyle(
+                                    color: isSelf ? Colors.grey : rose,
+                                  ),
+                                ),
                               ),
                             ],
                           ),
@@ -875,25 +1258,39 @@ class _UserManagementPageState extends State<_UserManagementPage> {
                               child: DropdownButton<String>(
                                 value: role == 'admin' ? 'admin' : 'customer',
                                 isExpanded: true,
-                                icon: const Icon(Icons.expand_more, color: torquoise),
+                                icon: const Icon(
+                                  Icons.expand_more,
+                                  color: torquoise,
+                                ),
                                 items: const [
-                                  DropdownMenuItem(value: 'customer', child: Text('Customer')),
-                                  DropdownMenuItem(value: 'admin', child: Text('Admin')),
+                                  DropdownMenuItem(
+                                    value: 'customer',
+                                    child: Text('Customer'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'admin',
+                                    child: Text('Admin'),
+                                  ),
                                 ],
                                 onChanged: isSelf
                                     ? null
                                     : (v) async {
                                         if (v == null || v == role) return;
-                                        final ok = await AuthService().setUserRole(uid, v);
+                                        final ok = await AuthService()
+                                            .setUserRole(uid, v);
                                         if (!context.mounted) return;
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
                                           SnackBar(
                                             content: Text(
                                               ok
                                                   ? 'Role updated to $v. They should sign out and sign in again to see it.'
                                                   : 'Could not update role (check Firestore rules).',
                                             ),
-                                            backgroundColor: ok ? torquoise : rose,
+                                            backgroundColor: ok
+                                                ? torquoise
+                                                : rose,
                                           ),
                                         );
                                       },

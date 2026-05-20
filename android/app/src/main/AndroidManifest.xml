@@ -2,7 +2,7 @@
     <application
         android:label="babyshopapp"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/adaptive_icon">
         <activity
             android:name=".MainActivity"
             android:exported="true"

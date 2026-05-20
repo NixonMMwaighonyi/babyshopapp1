@@ -1,5 +1,5 @@
 name: babyshopapp
-description: "A new Flutter project."
+description: "A consumer application that provides baby essential products and everything that a family with babies at their hand's reach."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -44,6 +44,7 @@ dependencies:
   cloud_firestore: ^6.3.0
   firebase_storage: ^13.0.0
   image_picker: ^1.1.2
+  flutter_launcher_icons: ^0.14.4
 
 dev_dependencies:
   flutter_test:
@@ -107,6 +108,11 @@ flutter:
   #       - asset: fonts/TrajanPro.ttf
   #       - asset: fonts/TrajanPro_Bold.ttf
   #         weight: 700
-  #
-  # For details regarding fonts from package dependencies,
-  # see https://flutter.dev/to/font-from-package
+
+# flutter_launcher_icons:
+#     android: "adaptive_icon"
+#     ios: true
+#     image_path: "assets/png/biggerLogo01.png"
+#     # For Android 8.0+ adaptive icons, use:
+#     # adaptive_icon_background: "#ffffff" # or an image path
+#     # adaptive_icon_foreground: "assets/icon/foreground.png"

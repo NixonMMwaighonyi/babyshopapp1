@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/material.dart';
 import 'dart:io';
 import '../models/cart_model.dart';
 
@@ -190,18 +191,39 @@ class ProductService {
     String? newOrderId;
     try {
       await _db.runTransaction((transaction) async {
+
+        // Validate ids and build refs
+        final Map<String, DocumentReference> refs = {};
         for (final item in cartItems) {
-          final productRef = _db.collection('products').doc(item.product.id);
-          final productSnap = await transaction.get(productRef);
-          if (!productSnap.exists) {
-            throw Exception('Product not found');
+          if (item.product.id.isEmpty) {
+            throw Exception('Invalid product id in cart: ${item.product.title}');
           }
-          final data = productSnap.data() as Map<String, dynamic>;
-          final stock = data['stock'] as int? ?? 10;
-          if (stock < item.quantity) {
-            throw Exception('Insufficient stock');
+          refs[item.product.id] = _db.collection('products').doc(item.product.id);
+        }
+
+        final Map<String, DocumentSnapshot> snaps = {};
+        for (final e in refs.entries) {
+          snaps[e.key] = await transaction.get(e.value);
+          if (!snaps[e.key]!.exists) throw Exception('Product not found: ${e.key}');
+        }
+
+        final Map<String, int> required = {};
+        for (final item in cartItems) {
+          required[item.product.id] = (required[item.product.id] ?? 0) + item.quantity;
+        }
+
+        for (final id in required.keys) {
+          final data = snaps[id]!.data() as Map<String, dynamic>;
+          final stock = ((data['stock'] as num?)?.toInt()) ?? 10;
+          if (stock < required[id]!) {
+            throw Exception('Insufficient stock for product $id');
           }
-          transaction.update(productRef, {'stock': stock - item.quantity});
+        }
+        
+        for (final id in required.keys) {
+          final data = snaps[id]!.data() as Map<String, dynamic>;
+          final stock = ((data['stock'] as num?)?.toInt()) ?? 10;
+          transaction.update(refs[id]!, {'stock': stock - required[id]!});
         }
 
         final orderRef = _db.collection('orders').doc();
@@ -224,7 +246,8 @@ class ProductService {
         });
       });
       return newOrderId;
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('placeOrder failed: $e\n$st');
       return null;
     }
   }

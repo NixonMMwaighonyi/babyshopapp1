@@ -187,11 +187,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   InputDecoration _dec(String hint, IconData icon) => InputDecoration(
     hintText: hint,
-    prefixIcon: Icon(icon, color: teal),
+    prefixIcon: Icon(
+      icon, color: teal
+    ),
     filled: true,
     fillColor: Colors.white,
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: teal)),
-    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: teal)),
-    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: torquoise, width: 1.5)),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14), 
+      borderSide: const BorderSide(color: teal)),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14), 
+      borderSide: const BorderSide(color: teal)),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14), 
+      borderSide: const BorderSide(color: torquoise, width: 1.5)),
   );
 }

@@ -93,7 +93,7 @@ class Product {
       sellerRating: (data['sellerRating'] as num?)?.toDouble() ?? 4.8,
       sellerReviewCount: data['sellerReviewCount'] as int? ?? 0,
       imageUrl: data['imageUrl'] ?? '',
-      stock: data['stock'] as int? ?? 10,
+      stock: ((data['stock'] as num?)?.toInt()) ?? 10,
       rating: (data['rating'] as num?)?.toDouble() ?? 4.0,
       reviewCount: data['reviewCount'] as int? ?? 0,
     );
