@@ -1,4 +1,5 @@
 // Shipping form + place order (deducts stock in Firestore, then clears the cart).
+import 'package:babyshopapp/Screens/authenticate/guest_checkout_gate.dart';
 import 'package:babyshopapp/models/cart_model.dart';
 import 'package:babyshopapp/services/productService.dart';
 import 'package:babyshopapp/Screens/home/order_confirmation_screen.dart';
@@ -83,6 +84,23 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       }
     }
   }
+
+  void _handleCheckoutAction(CartProvider cart) {
+  if (!_formKey.currentState!.validate()) {
+    return;
+  }
+
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const GuestCheckoutGate()),
+    );
+    return;
+  }
+
+  _placeOrder(cart);
+}
 
   @override
   Widget build(BuildContext context) {
@@ -172,7 +190,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     backgroundColor: rose, padding: const EdgeInsets.symmetric(vertical: 18),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
-                  onPressed: _placing ? null : () => _placeOrder(cart),
+                  onPressed: _placing ? null : () => _handleCheckoutAction(cart),
                   child: _placing
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text('Place Order', style: TextStyle(color: Colors.white, fontSize: 18, fontFamily: 'DynaPuff')),

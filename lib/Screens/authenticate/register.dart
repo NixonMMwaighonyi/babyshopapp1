@@ -1,11 +1,17 @@
 import 'package:babyshopapp/Screens/authenticate/sign-in.dart';
+import 'package:babyshopapp/Screens/home/checkoutScreen.dart';
 import 'package:babyshopapp/services/auth.dart';
 import 'package:flutter/material.dart';
 
 /// New customer sign-up — creates Firebase Auth user + Firestore `users` profile (role from `admin_emails`).
 class Register extends StatefulWidget {
   final Function? toggleView;
-  const Register({super.key, this.toggleView});
+  final bool goToCheckoutOnSuccess;
+  const Register({
+    super.key,
+    this.toggleView,
+    this.goToCheckoutOnSuccess = false,
+  });
 
   @override
   State<Register> createState() => _RegisterState();
@@ -198,6 +204,19 @@ class _RegisterState extends State<Register> {
                           });
                         } else {
                           if (!mounted) return;
+
+                          if (widget.goToCheckoutOnSuccess) {
+                            Navigator.of(context).popUntil((route) => route.isFirst);
+                            if (!context.mounted) return;
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const CheckoutScreen(),
+                              ),
+                            );
+                            return;
+                          }
+
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text("Account Created!")),
                           );

@@ -1,11 +1,17 @@
 import 'package:babyshopapp/Screens/authenticate/register.dart';
+import 'package:babyshopapp/Screens/home/checkoutScreen.dart';
 import 'package:babyshopapp/services/auth.dart';
 import 'package:flutter/material.dart';
 
 /// Email/password login — errors show on the right field; forgot-password sends a reset link.
 class SignIn extends StatefulWidget {
   final Function? toggleView;
-  const SignIn({super.key, this.toggleView});
+  final bool goToCheckoutOnSuccess;
+  const SignIn({
+    super.key,
+    this.toggleView,
+    this.goToCheckoutOnSuccess = false,
+  });
 
   @override
   State<SignIn> createState() => _SignInState();
@@ -301,12 +307,23 @@ class _SignInState extends State<SignIn> {
                           setState(() {
                             _loading = false;
                           });
-                          // Let [StreamProvider] rebuild first, then clear any pushed routes
-                          // (e.g. Register) so [Wrapper] is visible with the signed-in user.
                           WidgetsBinding.instance.addPostFrameCallback((_) {
                             if (!context.mounted) return;
+
                             Navigator.of(context).popUntil((route) => route.isFirst);
+
                             if (!context.mounted) return;
+
+                            if (widget.goToCheckoutOnSuccess) {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const CheckoutScreen(),
+                                ),
+                              );
+                              return;
+                            }
+
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Login successful!')),
                             );

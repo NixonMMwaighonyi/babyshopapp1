@@ -1,3 +1,5 @@
+import 'package:babyshopapp/Screens/authenticate/register.dart';
+import 'package:babyshopapp/Screens/authenticate/sign-in.dart';
 import 'package:babyshopapp/Screens/home/help_faq_screen.dart';
 import 'package:babyshopapp/services/auth.dart';
 import 'package:babyshopapp/services/productService.dart';
@@ -326,168 +328,275 @@ class _ProfileState extends State<Profile> {
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: Color(0xFF6ecdd4)))
-          : SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(children: [
-          // Avatar
-          CircleAvatar(
-            radius: 48,
-            backgroundColor: rose.withOpacity(0.2),
-            child: Text(
-              _avatarInitial(user),
-              style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: rose),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(_userData?['name'] ?? 'Your Name', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          Text(user?.email ?? '', style: TextStyle(color: Colors.grey[600])),
-          const SizedBox(height: 24),
+          : user == null
+              ? _guestProfileBody()
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(children: [
+                    CircleAvatar(
+                      radius: 48,
+                      backgroundColor: rose.withOpacity(0.2),
+                      child: Text(
+                        _avatarInitial(user),
+                        style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: rose),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(_userData?['name'] ?? 'Your Name', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    Text(user.email ?? '', style: TextStyle(color: Colors.grey[600])),
+                    const SizedBox(height: 24),
+                    _InfoCard(icon: Icons.person_outline, label: 'Name', value: _userData?['name'] ?? 'Not set'),
+                    _InfoCard(icon: Icons.email_outlined, label: 'Email', value: user.email ?? 'Not set'),
+                    _InfoCard(icon: Icons.phone_outlined, label: 'Phone', value: _userData?['phone']?.isNotEmpty == true ? _userData!['phone'] : 'Not set'),
+                    _InfoCard(icon: Icons.home_outlined, label: 'Address', value: _userData?['address']?.isNotEmpty == true ? _userData!['address'] : 'Not set'),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.edit_outlined, color: torquoise),
+                        label: const Text('Edit Profile', style: TextStyle(color: torquoise, fontFamily: 'DynaPuff')),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: torquoise),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        onPressed: _showEditSheet,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text('Payment methods (demo)', style: TextStyle(fontWeight: FontWeight.w600, color: darkGrey, fontFamily: 'DynaPuff')),
+                    ),
+                    const SizedBox(height: 10),
+                    if (_paymentMethods.isEmpty)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        margin: const EdgeInsets.only(bottom: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6)],
+                        ),
+                        child: Text('No saved payment methods yet.', style: TextStyle(color: Colors.grey[700])),
+                      )
+                    else
+                      ..._paymentMethods.map((m) {
+                        final id = m['id']?.toString() ?? '';
+                        final type = m['type']?.toString() ?? '';
+                        final label = m['label']?.toString() ?? '';
+                        final last4 = m['last4']?.toString() ?? '';
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6)],
+                          ),
+                          child: ListTile(
+                            leading: Icon(type == 'COD' ? Icons.local_shipping_outlined : Icons.credit_card, color: torquoise),
+                            title: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+                            subtitle: Text(type == 'COD' ? 'Cash on delivery' : 'Card ending ···· $last4'),
+                            trailing: IconButton(
+                              icon: Icon(Icons.delete_outline, color: rose.withOpacity(0.85)),
+                              onPressed: () async {
+                                setState(() {
+                                  _paymentMethods = _paymentMethods.where((e) => e['id']?.toString() != id).toList();
+                                });
+                                await _persistPaymentMethods();
+                              },
+                            ),
+                          ),
+                        );
+                      }),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.add, color: torquoise),
+                        label: const Text('Add payment method', style: TextStyle(color: torquoise, fontFamily: 'DynaPuff')),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: torquoise),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        onPressed: _showAddPaymentMethodSheet,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.help_outline, color: darkGrey),
+                        label: const Text('Help & FAQ', style: TextStyle(color: darkGrey, fontFamily: 'DynaPuff')),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: darkGrey.withOpacity(0.35)),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpFaqScreen())),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.support_agent_outlined, color: teal),
+                        label: const Text('Contact Support', style: TextStyle(color: teal, fontFamily: 'DynaPuff')),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: teal),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        onPressed: _showFeedbackDialog,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: _showDeleteAccountDialog,
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: rose.withOpacity(0.85)),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        child: Text('Delete my account', style: TextStyle(color: rose, fontFamily: 'DynaPuff')),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.logout, color: Colors.white),
+                        label: const Text('Logout', style: TextStyle(color: Colors.white, fontFamily: 'DynaPuff')),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: rose,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        onPressed: () async {
+                          await _auth.signOut();
+                          if (!mounted) return;
 
-          // Info cards
-          _InfoCard(icon: Icons.person_outline, label: 'Name', value: _userData?['name'] ?? 'Not set'),
-          _InfoCard(icon: Icons.email_outlined, label: 'Email', value: user?.email ?? 'Not set'),
-          _InfoCard(icon: Icons.phone_outlined, label: 'Phone', value: _userData?['phone']?.isNotEmpty == true ? _userData!['phone'] : 'Not set'),
-          _InfoCard(icon: Icons.home_outlined, label: 'Address', value: _userData?['address']?.isNotEmpty == true ? _userData!['address'] : 'Not set'),
+                          if (FirebaseAuth.instance.currentUser != null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Failed to log out. Please try again.')),
+                            );
+                            return;
+                          }
 
-          const SizedBox(height: 24),
-
-          // Edit button
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              icon: const Icon(Icons.edit_outlined, color: torquoise),
-              label: const Text('Edit Profile', style: TextStyle(color: torquoise, fontFamily: 'DynaPuff')),
-              style: OutlinedButton.styleFrom(side: const BorderSide(color: torquoise), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
-              onPressed: _showEditSheet,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text('Payment methods (demo)', style: TextStyle(fontWeight: FontWeight.w600, color: darkGrey, fontFamily: 'DynaPuff')),
-          ),
-          const SizedBox(height: 10),
-          if (_paymentMethods.isEmpty)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              margin: const EdgeInsets.only(bottom: 10),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6)],
-              ),
-              child: Text('No saved payment methods yet.', style: TextStyle(color: Colors.grey[700])),
-            )
-          else
-            ..._paymentMethods.map((m) {
-              final id = m['id']?.toString() ?? '';
-              final type = m['type']?.toString() ?? '';
-              final label = m['label']?.toString() ?? '';
-              final last4 = m['last4']?.toString() ?? '';
-              return Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6)],
+                          Navigator.of(context).popUntil((route) => route.isFirst);
+                        },
+                      ),
+                    ),
+                  ]),
                 ),
-                child: ListTile(
-                  leading: Icon(type == 'COD' ? Icons.local_shipping_outlined : Icons.credit_card, color: torquoise),
-                  title: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
-                  subtitle: Text(type == 'COD' ? 'Cash on delivery' : 'Card ending ···· $last4'),
-                  trailing: IconButton(
-                    icon: Icon(Icons.delete_outline, color: rose.withOpacity(0.85)),
-                    onPressed: () async {
-                      setState(() {
-                        _paymentMethods = _paymentMethods.where((e) => e['id']?.toString() != id).toList();
-                      });
-                      await _persistPaymentMethods();
-                    },
+    );
+  }
+
+    Widget _guestProfileBody() {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 90,
+                  height: 90,
+                  decoration: BoxDecoration(
+                    color: rose.withOpacity(0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.lock_outline,
+                    color: rose,
+                    size: 44,
                   ),
                 ),
-              );
-            }),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              icon: const Icon(Icons.add, color: torquoise),
-              label: const Text('Add payment method', style: TextStyle(color: torquoise, fontFamily: 'DynaPuff')),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: torquoise),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              ),
-              onPressed: _showAddPaymentMethodSheet,
+                const SizedBox(height: 20),
+                const Text(
+                  'Login to order',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'DynaPuff',
+                    color: darkGrey,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Browse products and add items to your cart. Sign in or create an account to place your order.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: darkGrey.withOpacity(0.85),
+                    height: 1.5,
+                    fontSize: 15,
+                  ),
+                ),
+                const SizedBox(height: 28),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: torquoise,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const SignIn()),
+                      );
+                    },
+                    child: const Text(
+                      'Login',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontFamily: 'DynaPuff',
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: teal),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const Register()),
+                      );
+                    },
+                    child: const Text(
+                      'Register',
+                      style: TextStyle(
+                        color: teal,
+                        fontSize: 16,
+                        fontFamily: 'DynaPuff',
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 12),
-
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              icon: const Icon(Icons.help_outline, color: darkGrey),
-              label: const Text('Help & FAQ', style: TextStyle(color: darkGrey, fontFamily: 'DynaPuff')),
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: darkGrey.withOpacity(0.35)),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              ),
-              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpFaqScreen())),
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Contact support
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              icon: const Icon(Icons.support_agent_outlined, color: teal),
-              label: const Text('Contact Support', style: TextStyle(color: teal, fontFamily: 'DynaPuff')),
-              style: OutlinedButton.styleFrom(side: const BorderSide(color: teal), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
-              onPressed: _showFeedbackDialog,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: _showDeleteAccountDialog,
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: rose.withOpacity(0.85)),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              ),
-              child: Text('Delete my account', style: TextStyle(color: rose, fontFamily: 'DynaPuff')),
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          // Logout
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              icon: const Icon(Icons.logout, color: Colors.white),
-              label: const Text('Logout', style: TextStyle(color: Colors.white, fontFamily: 'DynaPuff')),
-              style: ElevatedButton.styleFrom(backgroundColor: rose, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
-              onPressed: () async {
-                await _auth.signOut();
-                if (!mounted) return;
-
-                if (FirebaseAuth.instance.currentUser != null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Failed to log out. Please try again.')),
-                  );
-                  return;
-                }
-
-                Navigator.of(context).popUntil((route) => route.isFirst);
-              },
-            ),
-          ),
-        ]),
+        ),
       ),
     );
   }
